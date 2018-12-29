@@ -1,3 +1,4 @@
+#include "message.h"
 #define HDR_SIZE 3
 
 typedef enum
