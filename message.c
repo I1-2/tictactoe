@@ -57,3 +57,17 @@ struct wiadomosc
 }  __attribute__ ((packed));
 
 uint8_t bufor[256];
+
+int main()
+{
+    struct wiadomosc *mojaWiad = (struct wiadomosc *) bufor;
+
+    //Przykład tworzenia wiadomości tekstowej
+    mojaWiad->type = WIAD_TEKST;
+    strcpy(mojaWiad->dane.wiadomosc.napis, "To jest wiadomosc");
+    mojaWiad->len = strlen(mojaWiad->dane.wiadomosc.napis)+1+HDR_SIZE;
+
+    //wysyłanie
+    //send(nrGniazda, mojaWiad, mojaWiad->len, 0);
+    return 0;
+}
