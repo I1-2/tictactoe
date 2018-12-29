@@ -1,26 +1,10 @@
-#include "message.h"
-
-
 #define HDR_SIZE 3
 
 typedef enum
 {
     DOLACZ,
     POTWIERDZENIE,
-    WIAD_TEKST,int main()
-{
-  struct wiadomosc *mojaWiad = (struct wiadomosc *) bufor;
-
-  //Przykład tworzenia wiadomości tekstowej
-  mojaWiad->type = WIAD_TEKST;
-  strcpy(mojaWiad->dane.wiadomosc.napis, "To jest wiadomosc");
-  mojaWiad->len = strlen(mojaWiad->dane.wiadomosc.napis)+1+HDR_SIZE;
-
-  //wysyłanie
-  //send(nrGniazda, mojaWiad, mojaWiad->len, 0);
-  return 0;
-}
-
+    WIAD_TEKST,
     RUCH
 } type_t;
 
