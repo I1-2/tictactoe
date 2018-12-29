@@ -1,9 +1,11 @@
 #include "server.h"
 int main() {
-    struct connnection {
+    struct Connection {
         int active;
         int fd;
     };
+    int connections[10];
+    int port = 9876;
 
     int fdListen;
 
