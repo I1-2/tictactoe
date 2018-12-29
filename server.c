@@ -9,10 +9,8 @@
 
 int main() {
     int connections[MAX_CONNECTIONS];
-    for(int i; i<MAX_CONNECTIONS; ++i){
-        connections[i] = -1;
+    for(int i = 0; i < MAX_CONNECTIONS; ++i) connections[i] = -1;
         // -1 is inactive connection
-    }
 
     int port = 9876;
 
@@ -61,7 +59,7 @@ int main() {
         // select obserwujacy rfds i czekajacy max 5 sekund
 
         if (FD_ISSET(fdListen, &rfds)) {
-            int i = 0;
+            int i;
             for (i = 0; i < MAX_CONNECTIONS; ++i) {
                 if (connections[i] == -1) {
                     // przyjmowanie nowego połaczenia
