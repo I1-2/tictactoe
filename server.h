@@ -11,7 +11,14 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdint.h>
 
+#define true 1
+#define false 0
+#define bool int
+
+#define BUFLEN 1024
+#define MAX_CONNECTIONS 10
 
 
 

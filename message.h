@@ -5,10 +5,19 @@
 
 typedef enum
 {
+    WIN_CIRCLE         = -1,
+    DRAW               =  0,
+    WIN_CROSS          =  1,
+    JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE    =  2
+} result_t;
+
+typedef enum
+{
     JOIN,
     ACK,
     CHAT,
-    MOVE
+    MOVE,
+    FINISH
 } type_t;
 
 struct msg
@@ -38,6 +47,10 @@ struct msg
             uint8_t x;
             uint8_t y;
         } move;
+        struct
+        {
+            result_t result;
+        } finish;
     };
 
 }  __attribute__ ((packed));
