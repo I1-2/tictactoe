@@ -91,6 +91,7 @@ int main() {
                 int received = recv(connections[i], buf, BUFLEN, 0);
                 if (received < 1) {
                     // zakończenie połączenia
+                    printf("Zamykanie polaczenia #%d", i);
                     close(connections[i]);
                     connections[i] = -1;
                 } else {
