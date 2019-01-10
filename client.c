@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     scanf("%20s",msg_buf);
     printf("zawartosc bufora %s",msg_buf);
     message->type = JOIN;
-    strcpy(message->join.nickname, msg_buf);
+    strcpy(&(message->join.nickname), msg_buf);
     message->len = strlen(message->join.nickname)+1+HDR_SIZE;
     send(sd, message, message->len, 0);
     close(sd);
