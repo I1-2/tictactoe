@@ -62,9 +62,8 @@ int main(int argc, char *argv[])
     memset(msg_buf, 0x00, sizeof(msg_buf));
     struct msg *message = (struct msg *) msg_buf;
     printf("Insert your nickname");
-    scanf("%20s",msg_buf);
+    scanf("%20s",message->join.nickname);
     message->type = JOIN;
-    strcpy(message->join.nickname, msg_buf);
     message->len = strlen(message->join.nickname)+1+HDR_SIZE;
     send(sd, message, message->len, 0);
     close(sd);
