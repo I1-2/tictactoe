@@ -62,14 +62,14 @@ int main(int argc, char *argv[])
     memset(msg_buf, 0x00, sizeof(msg_buf));
     struct msg *message = (struct msg *) msg_buf;
     printf("Insert your nickname");
-    scanf("%20s",message->join.nickname);
+    fgets(message->join.nickname, 20, stdin);
     message->type = JOIN;
     message->len = strlen(message->join.nickname)+1+HDR_SIZE;
     send(sd, message, message->len, 0);
     close(sd);
 
     printf("Insert x and y coordinate: ");
-    fgets(chat_msg,160,stdin);
+    fgets(chat_msg, 160, stdin);
     printf("%s",chat_msg);
     if(chat_msg[0]=='/')
     {

@@ -47,6 +47,7 @@ int main() {
 
     char buf[BUFLEN];
 
+    #pragma clang diagnostic ignored "-Wmissing-noreturn"
     while(true) {
 
         int maxFd = fdListen;
@@ -107,7 +108,6 @@ int main() {
                 }
             }
         }
-
     }
     return 0;
 }
