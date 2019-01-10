@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
     struct sockaddr_in serveraddr;
     char msg_buf[255];
     char server[255];
-    char say[3]={'s','a','y'};
+    char chat_msg[160];
     int sd = socket(AF_INET, SOCK_STREAM, 0); // socket descryptor
     if(sd < 0)
     {
@@ -67,6 +67,28 @@ int main(int argc, char *argv[])
     message->len = strlen(message->join.nickname)+1+HDR_SIZE;
     send(sd, message, message->len, 0);
     close(sd);
+
+    printf("Insert x and y coordinate: ");
+    fgets(chat_msg,160,stdin);
+    printf("%s",chat_msg);
+    if(chat_msg[0]=='/')
+    {
+        sscanf(chat_msg,"/%d %d",&(message->move.x),&(message->move.y));
+        printf("/%d %d",message->move.x,message->move.y);
+        message->type = MOVE;
+        message->len = 3+HDR_SIZE;
+        send(sd, message, message->len, 0);
+        close(sd);
+    }
+    else
+    {
+        message->type = CHAT;
+        strcpy(message->chat.msg,chat_msg);
+        message->len = strlen(message->chat.msg)+1+HDR_SIZE;
+        send(sd, message, message->len, 0);
+    }
+
+    
     /*
     if(msg_buf[0]!='/')
     {
