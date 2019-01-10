@@ -17,11 +17,11 @@ int main(int argc, char *argv[])
     int sd = socket(AF_INET, SOCK_STREAM, 0); // socket descryptor
     if(sd < 0)
     {
-        perror("Błąd tworzenia gniazda");
+        perror("Creating socket error");
         exit(-1);
     }
     else
-        printf("Utworzono gniazdo klienta\n");
+        printf("Client socket is set\n");
 
     if(argc > 1)
         strcpy(server, argv[1]);
@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
         struct hostent *hostp = gethostbyname(server);
         if(hostp == (struct hostent *)NULL)
         {
-            printf("Nie znaleziono hosta ");
+            printf("404 Host not found ");
             close(sd);
             exit(-1);
         }
@@ -50,12 +50,12 @@ int main(int argc, char *argv[])
     {
         if((rc = connect(sd, (struct sockaddr *)&serveraddr, sizeof(serveraddr))) < 0)
         {
-            perror("Błąd połączenia");
+            perror("Connection error");
             close(sd);
             exit(-1);
         }
         else
-            printf("Ustanowiono połączenie\n");
+            printf("Connection is set\n");
     }
 
 
@@ -92,16 +92,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    
-    /*
-    if(msg_buf[0]!='/')
-    {
 
-    }
-    else
-    {
-        rc = send(sd, msg_buf, sizeof(msg_buf), 0);
-    }*/
 
     close(sd);
     return 0;
