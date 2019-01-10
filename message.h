@@ -5,6 +5,12 @@
 
 typedef enum
 {
+    CIRCLE,
+    CROSS
+} player_t;
+
+typedef enum
+{
     WIN_CIRCLE                                      = -1,
     DRAW                                            =  0,
     WIN_CROSS                                       =  1,
@@ -16,8 +22,9 @@ typedef enum
     JOIN,
     CHAT,
     MOVE,
+    MOVE_YOUR_ASS,
     FINISH
-} type_t;
+} msg_type_t;
 
 struct msg
 {
@@ -33,7 +40,8 @@ struct msg
 
         struct
         {
-            char msg[80];
+            char nickname[20];
+            char msg[160];
         } chat;
 
         struct
