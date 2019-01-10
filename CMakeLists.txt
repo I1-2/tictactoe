@@ -5,3 +5,4 @@ set(CMAKE_C_STANDARD 99)
 
 add_executable(tictactoe main.c)
 add_executable(tictactoe_server server.c)
+add_executable(tictactoe_client client.c)

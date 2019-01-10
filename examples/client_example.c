@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
         exit(-1);
     }
     else
-        printf("Utworzono gniazdo klienta\n");
+    printf("Utworzono gniazdo klienta\n");
 
     /* Jako argument podano adres serwera */
     if(argc > 1)
