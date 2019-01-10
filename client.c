@@ -63,6 +63,7 @@ int main(int argc, char *argv[])
     struct msg *message = (struct msg *) msg_buf;
     printf("Insert your nickname");
     scanf("%20s",msg_buf);
+    printf("zawartosc bufora %s",msg_buf);
     message->type = JOIN;
     strcpy(message->join.nickname, msg_buf);
     message->len = strlen(message->join.nickname)+1+HDR_SIZE;
