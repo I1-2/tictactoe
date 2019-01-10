@@ -46,22 +46,18 @@ int main(int argc, char *argv[])
         }
         memcpy(&serveraddr.sin_addr, hostp->h_addr, sizeof(serveraddr.sin_addr));
     }
-
-    else
+    if((rc = connect(sd, (struct sockaddr *)&serveraddr, sizeof(serveraddr))) < 0)
     {
         if((rc = connect(sd, (struct sockaddr *)&serveraddr, sizeof(serveraddr))) < 0)
         {
-            if((rc = connect(sd, (struct sockaddr *)&serveraddr, sizeof(serveraddr))) < 0)
-            {
-                perror("Błąd połączenia");
-                close(sd);
-                exit(-1);
-            }
-            else
-                printf("Ustanowiono połączenie\n");
+            perror("Błąd połączenia");
+            close(sd);
+            exit(-1);
         }
-
+        else
+            printf("Ustanowiono połączenie\n");
     }
+
 
     memset(msg_buf, 0x00, sizeof(msg_buf));
     struct msg *message = (struct msg *) msg_buf;
