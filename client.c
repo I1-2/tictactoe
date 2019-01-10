@@ -65,27 +65,31 @@ int main(int argc, char *argv[])
     fgets(message->join.nickname, 20, stdin);
     message->type = JOIN;
     message->len = strlen(message->join.nickname)+1+HDR_SIZE;
-    send(sd, message, message->len, 0);
-    close(sd);
-
-    printf("Insert x and y coordinate: ");
+    if(send(sd, message, message->len, 0) == -1){
+        perror("Socket send error");
+        exit(-1);
+    }
+    printf("Insert x and y coordinate in \"/x y\" format or chat message: ");
     fgets(chat_msg, 160, stdin);
-    printf("%s",chat_msg);
     if(chat_msg[0]=='/')
     {
         sscanf(chat_msg,"/%d %d",&(message->move.x),&(message->move.y));
-        printf("/%d %d",message->move.x,message->move.y);
         message->type = MOVE;
         message->len = 3+HDR_SIZE;
-        send(sd, message, message->len, 0);
-        close(sd);
+        if(send(sd, message, message->len, 0) == -1){
+            perror("Socket send error");
+            exit(-1);
+        }
     }
     else
     {
         message->type = CHAT;
         strcpy(message->chat.msg,chat_msg);
         message->len = strlen(message->chat.msg)+1+HDR_SIZE;
-        send(sd, message, message->len, 0);
+        if(send(sd, message, message->len, 0) == -1){
+            perror("Socket send error");
+            exit(-1);
+        }
     }
 
     
@@ -99,5 +103,6 @@ int main(int argc, char *argv[])
         rc = send(sd, msg_buf, sizeof(msg_buf), 0);
     }*/
 
+    close(sd);
     return 0;
 }
