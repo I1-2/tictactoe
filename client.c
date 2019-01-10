@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 
     else
     {
-        if(strcmp(say,msg_buf))
+        if((rc = connect(sd, (struct sockaddr *)&serveraddr, sizeof(serveraddr))) < 0)
         {
             if((rc = connect(sd, (struct sockaddr *)&serveraddr, sizeof(serveraddr))) < 0)
             {
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 
     memset(msg_buf, 0x00, sizeof(msg_buf));
     struct msg *message = (struct msg *) msg_buf;
-    printf("Podaj swoj nickname");
+    printf("Insert your nickname");
     scanf("%20s",msg_buf);
     message->type = JOIN;
     strcpy(message->join.nickname, msg_buf);
@@ -73,8 +73,11 @@ int main(int argc, char *argv[])
     send(sd, message, message->len, 0);
     if(msg_buf[0]!='/')
     {
-        rc = send(sd, msg_buf, sizeof(msg_buf), 0);
 
+    }
+    else
+    {
+        rc = send(sd, msg_buf, sizeof(msg_buf), 0);
     }
 
     return 0;
