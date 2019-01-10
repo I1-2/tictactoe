@@ -65,12 +65,12 @@ int main(int argc, char *argv[])
         FD_ZERO(&rfds);
         FD_SET(fileno(stdin), &rfds);
         FD_SET(sd, &rfds);
-        select((fileno(stdin) > sd: fileno(stdin) ? sd)+1, &rfds, NULL, NULL, NULL);
-        if(FD_ISSET(sd,&rfds))
+        select((fileno(stdin) > sd? fileno(stdin) : sd)+1, &rfds, NULL, NULL, NULL);
+        if(FD_ISSET(sd, &rfds))
         {
             receive = recv(sd, msg_buf, 255, 0);
         }
-        if(FD_ISSET(fileno(stdin),&rfds)
+        if(FD_ISSET(fileno(stdin), &rfds)
         {
 
             struct msg *message = (struct msg *) msg_buf;
