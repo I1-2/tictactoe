@@ -67,6 +67,7 @@ int main(int argc, char *argv[])
     strcpy(message->join.nickname, msg_buf);
     message->len = strlen(message->join.nickname)+1+HDR_SIZE;
     send(sd, message, message->len, 0);
+    close(sd);
     if(msg_buf[0]!='/')
     {
 
