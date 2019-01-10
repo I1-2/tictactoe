@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "message.h"
+#include "../message.h"
 
 
 uint8_t bufor[256];

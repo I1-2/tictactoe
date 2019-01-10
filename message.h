@@ -14,7 +14,6 @@ typedef enum
 typedef enum
 {
     JOIN,
-    ACK,
     CHAT,
     MOVE,
     FINISH
@@ -31,11 +30,6 @@ struct msg
         {
             char nickname[20];
         } join;
-
-        struct
-        {
-            uint8_t result;
-        } ack;
 
         struct
         {
