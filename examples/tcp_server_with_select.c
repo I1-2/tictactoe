@@ -92,11 +92,11 @@ int main() {
                 int received = recv(connections[i], buf, BUFLEN, 0);
                 if (received < 1) {
                     // zakończenie połączenia
-                    printf("Zamykanie polaczenia #%d", i);
+                    printf("Zamykanie polaczenia #%d\n", i);
                     close(connections[i]);
                     connections[i] = -1;
                 } else {
-                    printf("Odebrałem od klienta %d: %s", i, buf);
+                    printf("Odebrałem od klienta %d: %s\n", i, buf);
                     int j;
                     for (j = 0; j < MAX_CONNECTIONS; ++j) {
                         // rozsyłanie wiadomości do pozostałych połączeń
