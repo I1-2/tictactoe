@@ -69,13 +69,13 @@ int main(int argc, char *argv[])
         perror("Socket send error");
         exit(-1);
     }
-    printf("Insert x and y coordinate in \"/x y\" format or chat message: ");
+    printf("Insert x and y coordinate with between them: ");
     fgets(chat_msg, 160, stdin);
-    if(chat_msg[0]=='/')
+    if(chat_msg[0]!='/')
     {
-        sscanf(chat_msg,"/%d %d",&(message->move.x),&(message->move.y));
+        sscanf(chat_msg,"%d %d",&(message->move.x),&(message->move.y));
         message->type = MOVE;
-        message->len = 3+HDR_SIZE;
+        message->len = 2+HDR_SIZE;
         if(send(sd, message, message->len, 0) == -1){
             perror("Socket send error");
             exit(-1);
