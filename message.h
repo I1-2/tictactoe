@@ -53,8 +53,13 @@ struct msg
 
         struct
         {
-            result_t result;
+            uint8_t result;
         } finish;
+
+        struct
+        {
+            uint8_t you;
+        } move_your_ass;
     };
 
 }  __attribute__ ((packed));
