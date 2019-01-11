@@ -59,6 +59,18 @@ int main(int argc, char *argv[])
             printf("Connection is set\n");
     }
 
+    struct msg *message = (struct msg *) msg_buf;
+    printf("Insert your nickname");
+    fgets(message->join.nickname, 20, stdin);
+    message->type = JOIN;
+    message->len = strlen(message->join.nickname)+1+HDR_SIZE;
+    if(send(sd, message, message->len, 0) == -1){
+        perror("Socket send error");
+        exit(-1);
+    }
+
+    char moves[3][3];
+
     while(1)
     {
         fd_set rfds;
@@ -69,26 +81,60 @@ int main(int argc, char *argv[])
         if(FD_ISSET(sd, &rfds))
         {
             receive = recv(sd, msg_buf, 255, 0);
+            struct msg *message = (struct msg *) msg_buf;
+            switch(message->type)
+            {
+                case CHAT:
+                    printf("%s",message->chat.nickname);
+                    printf("%s",message->chat.msg);
+                    break;
+                case MOVE:
+                    if(message->move.player==CIRCLE)
+                        moves[message->move.x][message->move.y] = 'O';
+                    else
+                        moves[message->move.x][message->move.y] = 'X';
+                    for (int x=0; x<3; x++)
+                    {
+                        for (int y=0; y<3; y++)
+                        {
+                            printf("%c", moves[x][y]);
+                        }
+                        printf("\n");
+                    }
+                    break;
+                case MOVE_YOUR_ASS:
+                    printf("YOUR TURN");
+                    break;
+                case FINISH:
+                    switch(message->finish.result)
+                    {
+                        case WIN_CIRCLE:
+                            printf("CIRCLE WINS");
+                            break;
+                        case WIN_CROSS:
+                            printf("CROSS WINS");
+                            break;
+                        case DRAW:
+                            printf("DRAW");
+                            break;
+                        case JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE:
+                            printf("JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE");
+                            break;
+                    }
+                    break;
+            }
         }
-        if(FD_ISSET(fileno(stdin), &rfds)
+        if(FD_ISSET(fileno(stdin), &rfds))
         {
 
             struct msg *message = (struct msg *) msg_buf;
-            printf("Insert your nickname");
-            fgets(message->join.nickname, 20, stdin);
-            message->type = JOIN;
-            message->len = strlen(message->join.nickname)+1+HDR_SIZE;
-            if(send(sd, message, message->len, 0) == -1){
-                perror("Socket send error");
-                exit(-1);
-            }
             printf("Insert x and y coordinate with between them: ");
             fgets(chat_msg, 160, stdin);
             if(chat_msg[0]!='/')
             {
                 sscanf(chat_msg,"%d %d",&(message->move.x),&(message->move.y));
                 message->type = MOVE;
-                message->len = 2+HDR_SIZE;
+                message->len = 3+HDR_SIZE;
                 if(send(sd, message, message->len, 0) == -1){
                     perror("Socket send error");
                     exit(-1);
@@ -102,7 +148,7 @@ int main(int argc, char *argv[])
             {
                 message->type = CHAT;
                 strcpy(message->chat.msg,chat_msg);
-                message->len = strlen(message->chat.msg)+1+HDR_SIZE;
+                message->len = strlen(message->chat.msg)+21+HDR_SIZE;
                 if(send(sd, message, message->len, 0) == -1){
                     perror("Socket send error");
                     exit(-1);
