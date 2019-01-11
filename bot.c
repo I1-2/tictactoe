@@ -97,6 +97,7 @@ int main(int argc, char *argv[])
                     break;
                 case MOVE_YOUR_ASS:
                     printf("YOUR TURN\n");
+                    //TODO: COPY, MODIFY AND USE BOT FUNCTION DO MOVE
                     break;
             }
         }
