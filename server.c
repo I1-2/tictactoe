@@ -8,7 +8,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <stdint.h>
+#include <stdint.h>RECEJWE!!!!
 
 #include "message.h"
 
@@ -19,7 +19,7 @@
 #define BUFLEN 255
 #define MAX_CONNECTIONS 10
 #define MAX_GAMES MAX_CONNECTIONS/2
-#define BIND_PORT = 9876;
+#define BIND_PORT 9876
 
 typedef struct {
     int circle_player_fd;
