@@ -12,7 +12,6 @@ int main(int argc, char *argv[])
     struct sockaddr_in serveraddr;
     char msg_buf[255];
     char server[255];
-    char chat_msg[160];
     int receive;
 
     int sd = socket(AF_INET, SOCK_STREAM, 0); // socket descryptor
@@ -58,18 +57,15 @@ int main(int argc, char *argv[])
         else
             printf("Connection is set\n");
     }
-
+    strcpy(msg_buf,"RABIN");
     struct msg *message = (struct msg *) msg_buf;
-    printf("Insert your nickname\n");
-    fgets(message->join.nickname, 20, stdin);
+    message->join.nickname;
     message->type = JOIN;
     message->len = strlen(message->join.nickname)+1+HDR_SIZE;
     if(send(sd, message, message->len, 0) == -1){
         perror("Socket send error\n");
         exit(-1);
     }
-    printf("****Prepend your message with / to chat, write :q to quit****\n");
-    printf("Insert x and y coordinate with between them: \n");
     char moves[3][3];
 
     while(1)
@@ -91,80 +87,22 @@ int main(int argc, char *argv[])
             struct msg *message = (struct msg *) msg_buf;
             switch(message->type)
             {
-                case CHAT:
-                    printf("%s",message->chat.nickname);
-                    printf("%s",message->chat.msg);
-                    break;
                 case MOVE:
-                    if(message->move.x < 0 || message->move.x > 2 || message->move.y < 0 || message->move.y > 2)
+                    if (message->move.x < 0 || message->move.x > 2 || message->move.y < 0 || message->move.y > 2)
                         break;
-                    if(message->move.player==CIRCLE)
+                    if (message->move.player == CIRCLE)
                         moves[message->move.x][message->move.y] = 'O';
                     else
                         moves[message->move.x][message->move.y] = 'X';
-                    for (int x=0; x<3; x++)
-                    {
-                        for (int y=0; y<3; y++)
-                        {
-                            printf("%c", moves[x][y]);
-                        }
-                        printf("\n");
-                    }
                     break;
                 case MOVE_YOUR_ASS:
                     printf("YOUR TURN\n");
                     break;
-                case FINISH:
-                    switch(message->finish.result)
-                    {
-                        case WIN_CIRCLE:
-                            printf("CIRCLE WINS\n");
-                            break;
-                        case WIN_CROSS:
-                            printf("CROSS WINS\n");
-                            break;
-                        case DRAW:
-                            printf("DRAW\n");
-                            break;
-                        case JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE:
-                            printf("JEDEN RABIN POWIE TAK DRUGI RABIN POWIE NIE\n");
-                            break;
-                    }
-                    break;
             }
         }
-        if(FD_ISSET(fileno(stdin), &rfds))
-        {
 
-            struct msg *message = (struct msg *) msg_buf;
-            fgets(chat_msg, 160, stdin);
-            if(chat_msg[0]!='/')
-            {
-                sscanf(chat_msg,"%d %d",&(message->move.x),&(message->move.y));
-                message->type = MOVE;
-                message->len = 3+HDR_SIZE;
-                if(send(sd, message, message->len, 0) == -1){
-                    perror("Socket send error\n");
-                    exit(-1);
-                }
-            }
-            else if(chat_msg[0]==':' && chat_msg[1]=='q')
-            {
-                close(sd);
-                exit(0);
-            }
-            else
-            {
-                message->type = CHAT;
-                strcpy(message->chat.msg,chat_msg);
-                message->len = strlen(message->chat.msg)+21+HDR_SIZE;
-                if(send(sd, message, message->len, 0) == -1){
-                    perror("Socket send error\n");
-                    exit(-1);
-                }
-            }
 
-        }
+
     }
 
 
@@ -173,3 +111,4 @@ int main(int argc, char *argv[])
     close(sd);
     return 0;
 }
+
