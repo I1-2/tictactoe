@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     int sd = socket(AF_INET, SOCK_STREAM, 0); // socket descryptor
     if(sd < 0)
     {
-        perror("Creating socket error");
+        perror("Creating socket error\n");
         exit(-1);
     }
     else
@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
         struct hostent *hostp = gethostbyname(server);
         if(hostp == (struct hostent *)NULL)
         {
-            printf("404 Host not found ");
+            printf("404 Host not found \n");
             close(sd);
             exit(-1);
         }
@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
     {
         if((rc = connect(sd, (struct sockaddr *)&serveraddr, sizeof(serveraddr))) < 0)
         {
-            perror("Connection error");
+            perror("Connection error\n");
             close(sd);
             exit(-1);
         }
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     message->type = JOIN;
     message->len = strlen(message->join.nickname)+1+HDR_SIZE;
     if(send(sd, message, message->len, 0) == -1){
-        perror("Socket send error");
+        perror("Socket send error\n");
         exit(-1);
     }
 
@@ -103,22 +103,22 @@ int main(int argc, char *argv[])
                     }
                     break;
                 case MOVE_YOUR_ASS:
-                    printf("YOUR TURN");
+                    printf("YOUR TURN\n");
                     break;
                 case FINISH:
                     switch(message->finish.result)
                     {
                         case WIN_CIRCLE:
-                            printf("CIRCLE WINS");
+                            printf("CIRCLE WINS\n");
                             break;
                         case WIN_CROSS:
-                            printf("CROSS WINS");
+                            printf("CROSS WINS\n");
                             break;
                         case DRAW:
-                            printf("DRAW");
+                            printf("DRAW\n");
                             break;
                         case JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE:
-                            printf("JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE");
+                            printf("JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE\n");
                             break;
                     }
                     break;
@@ -128,7 +128,8 @@ int main(int argc, char *argv[])
         {
 
             struct msg *message = (struct msg *) msg_buf;
-            printf("Insert x and y coordinate with between them: ");
+            printf("****Prepend your message with / to chat, write :q to quit****\n");
+            printf("Insert x and y coordinate with between them: \n");
             fgets(chat_msg, 160, stdin);
             if(chat_msg[0]!='/')
             {
@@ -136,7 +137,7 @@ int main(int argc, char *argv[])
                 message->type = MOVE;
                 message->len = 3+HDR_SIZE;
                 if(send(sd, message, message->len, 0) == -1){
-                    perror("Socket send error");
+                    perror("Socket send error\n");
                     exit(-1);
                 }
             }
@@ -150,7 +151,7 @@ int main(int argc, char *argv[])
                 strcpy(message->chat.msg,chat_msg);
                 message->len = strlen(message->chat.msg)+21+HDR_SIZE;
                 if(send(sd, message, message->len, 0) == -1){
-                    perror("Socket send error");
+                    perror("Socket send error\n");
                     exit(-1);
                 }
             }
