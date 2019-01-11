@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
     }
 
     struct msg *message = (struct msg *) msg_buf;
-    printf("Insert your nickname");
+    printf("Insert your nickname\n");
     fgets(message->join.nickname, 20, stdin);
     message->type = JOIN;
     message->len = strlen(message->join.nickname)+1+HDR_SIZE;
@@ -68,7 +68,8 @@ int main(int argc, char *argv[])
         perror("Socket send error\n");
         exit(-1);
     }
-
+    printf("****Prepend your message with / to chat, write :q to quit****\n");
+    printf("Insert x and y coordinate with between them: \n");
     char moves[3][3];
 
     while(1)
@@ -89,6 +90,8 @@ int main(int argc, char *argv[])
                     printf("%s",message->chat.msg);
                     break;
                 case MOVE:
+                    if(message->move.x < 0 || message->move.x > 2 || message->move.y < 0 || message->move.y > 2)
+                        break;
                     if(message->move.player==CIRCLE)
                         moves[message->move.x][message->move.y] = 'O';
                     else
@@ -118,7 +121,7 @@ int main(int argc, char *argv[])
                             printf("DRAW\n");
                             break;
                         case JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE:
-                            printf("JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE\n");
+                            printf("JEDEN RABIN POWIE TAK DRUGI RABIN POWIE NIE\n");
                             break;
                     }
                     break;
@@ -128,8 +131,6 @@ int main(int argc, char *argv[])
         {
 
             struct msg *message = (struct msg *) msg_buf;
-            printf("****Prepend your message with / to chat, write :q to quit****\n");
-            printf("Insert x and y coordinate with between them: \n");
             fgets(chat_msg, 160, stdin);
             if(chat_msg[0]!='/')
             {
