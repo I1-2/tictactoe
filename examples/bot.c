@@ -167,6 +167,7 @@ int do_move(board_t *board, player_t player, int *place_number)
 
         result_t tmpRes = result_game(board);
         if (tmpRes != JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE)
+        if (tmpRes != JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE)
         {
             temp_result = check_result(player, tmpRes);
         }

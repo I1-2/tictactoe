@@ -5,6 +5,154 @@
 
 #define SERVPORT 9876
 
+typedef enum
+{
+    NONE    = 0,
+    CIRCLE_   = 1,
+    CROSS_ = 2
+} move_t;
+
+typedef enum
+{
+    G_CIRCLE = 0,
+    G_CROSS  = 1
+} player_t_;
+
+typedef enum
+{
+    WIN_CIRCLE_         = -1,
+    DRAW_               =  0,
+    WIN_CROSS_          =  1,
+    JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE_    =  2
+} result_t_;
+
+typedef struct
+{
+    uint8_t moves[3][3];
+} board_t;
+
+int sign_move_n(board_t *board, player_t_ player, int place_number_x, int place_number_y)
+{
+    if (board->moves[place_number_x][place_number_y] != NONE)
+        return 0;
+    board->moves[place_number_x][place_number_y] = (player == G_CIRCLE) ? CIRCLE : CROSS;
+    return 1;
+}
+
+int remove_move_n(board_t *board, int place_number_x, int place_number_y)
+{
+    if (board->moves[place_number_x][place_number_y] == NONE)
+        return 0;
+    board->moves[place_number_x][place_number_y] = NONE;
+    return 1;
+
+}
+
+void change_player(player_t_ * player)
+{
+    *player = ((*player == G_CIRCLE) ? G_CROSS : G_CIRCLE);
+}
+
+result_t result_game(board_t *board)
+{
+    //Checking verses
+    for (int y=0; y<3; y++)
+    {
+        for(int j=0; j<3; j++) {
+            if ((board->moves[y][j] == board->moves[y][j+1]) && (board->moves[y][j] == board->moves[y][j+ 2])) {
+                if (board->moves[y][j] == CIRCLE_)
+                    return WIN_CIRCLE;
+                if (board->moves[y][j] == CROSS_)
+                    return WIN_CROSS;
+            }
+        }
+    }
+    //Checking columns
+    for (int x=0; x<3; x++)
+    {
+        for(int j=0; j<3; j++) {
+            if ((board->moves[x][j] == board->moves[x + 1][j]) && (board->moves[x][j] == board->moves[x + 2][j])) {
+                if (board->moves[x][j] == CIRCLE_)
+                    return WIN_CIRCLE;
+                if (board->moves[x][j] == CROSS_)
+                    return WIN_CROSS;
+            }
+        }
+    }
+    //Checking diagonals
+    if ((board->moves[0][0] == board->moves[1][1]) && (board->moves[0][0] == board->moves[2][2]))
+    {
+        if (board->moves[1][1] == CIRCLE_)
+            return WIN_CIRCLE;
+        if (board->moves[1][1] == CROSS_)
+            return WIN_CROSS;
+    }
+    if ((board->moves[0][2] == board->moves[1][1]) && (board->moves[0][2] == board->moves[2][0]))
+    {
+        if (board->moves[1][1] == CIRCLE_)
+            return WIN_CIRCLE;
+        if (board->moves[1][1] == CROSS_)
+            return WIN_CROSS;
+    }
+    //Checking posibility of move
+
+    for (int i=0; i<3; i++) {
+        for(int j=0; j<3; j++) {
+            if (board->moves[i][j] == NONE)
+                return JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE;
+        }
+    }
+    return DRAW;
+}
+
+int check_result(player_t_ player, result_t_ result)
+{
+    if (result == DRAW) return 0;
+
+    if (((player == G_CIRCLE) && (result == WIN_CIRCLE)) || ((player == G_CROSS) && (WIN_CROSS)))
+        return 1;
+
+    return -1;
+}
+// PRZEROBIĆ ****************************************************************************************
+int do_move(board_t *board, player_t_ player, int *place_number_x, int *place_number_y)
+{
+    int best_move_x = -1;
+    int best_move_y = -1;
+    int best_move_pt = -2;
+
+    int temp_result;
+    for (int i=0; i<3; i++)
+    {
+        for(int i2; i2<3; i2++) {
+            if (sign_move_n(board, player, i, i2) == 0) continue;
+
+            result_t_ tmpRes = result_game(board);
+            if (tmpRes != JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE)
+                if (tmpRes != JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE) {
+                    temp_result = check_result(player, tmpRes);
+                } else {
+                    player_t enemy = player;
+                    change_player(&enemy);
+                    temp_result = (-1) * do_move(board, enemy, NULL, NULL);
+                }
+            if (temp_result > best_move_pt) {
+                best_move_pt = temp_result;
+                best_move_x = i;
+                best_move_y = i2;
+            }
+            remove_move_n(board, i,i2);
+        }
+    }
+
+    if ((place_number_x != NULL) && (place_number_y != NULL))
+    {
+        *place_number_x = best_move_x;
+        *place_number_y = best_move_y;
+    }
+    return best_move_pt;
+}
+
 int main(int argc, char *argv[])
 {
     int rc;
@@ -85,8 +233,7 @@ int main(int argc, char *argv[])
                 exit(0);
             }
             struct msg *message = (struct msg *) msg_buf;
-            switch(message->type)
-            {
+            switch(message->type) {
                 case MOVE:
                     if (message->move.x < 0 || message->move.x > 2 || message->move.y < 0 || message->move.y > 2)
                         break;
@@ -96,8 +243,42 @@ int main(int argc, char *argv[])
                         moves[message->move.x][message->move.y] = 'X';
                     break;
                 case MOVE_YOUR_ASS:
-                    printf("YOUR TURN\n");
-                    //TODO: COPY, MODIFY AND USE BOT FUNCTION DO MOVE
+                    if (message->move_your_ass.you == 1) { // 1 for CIRCLE and 2 for CROSS
+                        struct msg *message = (struct msg *) msg_buf;
+                        int n = -1;
+                        int n2 = -1;
+                        player_t_ pl = G_CIRCLE;
+                        do_move(&moves, pl, &n, &n2);
+                        message->type = MOVE;
+                        message->move.x = n;
+                        message->move.y = n2;
+                        message->move.player = 1;
+                        message->len = 3 + HDR_SIZE;
+                        if (send(sd, message, message->len, 0) == -1) {
+                            perror("Socket send error\n");
+                            exit(-1);
+                        }
+                    }
+                    else {
+                        struct msg *message = (struct msg *) msg_buf;
+                        int n = -1;
+                        int n2 = -1;
+                        player_t_ pl = G_CROSS;
+                        do_move(&moves, pl, &n, &n2);
+                        message->type = MOVE;
+                        message->move.x = n;
+                        message->move.y = n2;
+                        message->move.player = 2; // 2 = CROSS
+                        message->len = 3 + HDR_SIZE;
+                        if (send(sd, message, message->len, 0) == -1) {
+                            perror("Socket send error\n");
+                            exit(-1);
+                        }
+                    }
+                    break;
+                case FINISH:
+                    close(sd);
+                    exit(0);
                     break;
             }
         }

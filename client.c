@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
             receive = recv(sd, msg_buf, 255, 0);
             if(receive<1)
             {
-                printf("CONNECTION ERROR --> EXITING");
+                printf("CONNECTION ERROR --> EXITING\n");
                 close(sd);
                 exit(0);
             }
