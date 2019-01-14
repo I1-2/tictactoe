@@ -7,7 +7,7 @@
 
 int sign_move_n(board_t *board, figure_t player, int place_number_x, int place_number_y)
 {
-    if (board->moves[place_number_x][place_number_y] != NONE)
+    if (board->moves[place_number_x][place_number_y] != NONE_FIGURE)
         return 0;
     board->moves[place_number_x][place_number_y] = (player == CIRCLE) ? CIRCLE : CROSS;
     return 1;
@@ -15,9 +15,9 @@ int sign_move_n(board_t *board, figure_t player, int place_number_x, int place_n
 
 int remove_move_n(board_t *board, int place_number_x, int place_number_y)
 {
-    if (board->moves[place_number_x][place_number_y] == NONE)
+    if (board->moves[place_number_x][place_number_y] == NONE_FIGURE)
         return 0;
-    board->moves[place_number_x][place_number_y] = NONE;
+    board->moves[place_number_x][place_number_y] = NONE_FIGURE;
     return 1;
 
 }
@@ -72,7 +72,7 @@ result_t result_game(board_t *board)
 
     for (int i=0; i<3; i++) {
         for(int j=0; j<3; j++) {
-            if (board->moves[i][j] == NONE)
+            if (board->moves[i][j] == NONE_FIGURE)
                 return JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE;
         }
     }

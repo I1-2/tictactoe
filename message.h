@@ -10,7 +10,7 @@ typedef struct
 
 typedef enum
 {
-    NONE,
+    NONE_FIGURE,
     CIRCLE,
     CROSS
 } figure_t;
