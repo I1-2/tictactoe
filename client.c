@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
         if(hostp == (struct hostent *)NULL)
         {
             printf("404 Host not found \n");
-            close(sd);
+            shutdown(sd,0);
             exit(-1);
         }
         memcpy(&serveraddr.sin_addr, hostp->h_addr, sizeof(serveraddr.sin_addr));
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
         if((rc = connect(sd, (struct sockaddr *)&serveraddr, sizeof(serveraddr))) < 0)
         {
             perror("Connection error\n");
-            close(sd);
+            shutdown(sd,0);
             exit(-1);
         }
         else
@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
             if(receive<1)
             {
                 printf("CONNECTION ERROR --> EXITING\n");
-                close(sd);
+                shutdown(sd,0);
                 exit(0);
             }
             struct msg *message = (struct msg *) msg_buf;
@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
                             printf("JEDEN RABIN POWIE TAK DRUGI RABIN POWIE NIE\n");
                             break;
                     }
-                    close(sd);
+                    shutdown(sd,0);
                     exit(0);
                     break;
             }
@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
             fgets(chat_msg, 160, stdin);
             if(chat_msg[0]==':' && chat_msg[1]=='q')
             {
-                close(sd);
+                shutdown(sd,0);
                 exit(0);
             }
             else if(chat_msg[0]!='/')
@@ -175,6 +175,6 @@ int main(int argc, char *argv[])
 
 
 
-    close(sd);
+    shutdown(sd,0);
     return 0;
 }
