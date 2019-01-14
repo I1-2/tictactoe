@@ -31,6 +31,7 @@ typedef struct {
     player_t players[3];
     uint8_t player_whose_turn_is_now;
     board_t board;
+    uint8_t moves_counter;
 } game_t;
 
 bool send_chat_msg(int fd, char nickname[20], char msg[160]){
@@ -43,13 +44,21 @@ bool send_chat_msg(int fd, char nickname[20], char msg[160]){
     // return true if message sent and false if not
 }
 
+void clean_game_up(game_t* game){
+    memset(game, 0, sizeof(*game));
+    shutdown(game->players[CIRCLE].fd, 0);
+    game->players[CIRCLE].fd = -1;
+    shutdown(game->players[CROSS].fd, 0);
+    game->players[CROSS].fd = -1;
+}
+
+result_t result_game(board_t *board);
+
 int main() {
     game_t games[MAX_GAMES];
-    memset(&games, 0, sizeof(games));
 
     for(int i = 0; i < MAX_GAMES; ++i){
-        games[i].players[CIRCLE].fd = -1;
-        games[i].players[CROSS].fd = -1;
+        clean_game_up(&(games[i]));
     }
 
     int fdListen;
@@ -69,6 +78,7 @@ int main() {
     }
 
     listen(fdListen, MAX_CONNECTIONS);
+    printf("Server listening for new connections\n");
 
     // fd set with fds to be watched for read
     fd_set rfds;
@@ -132,7 +142,7 @@ int main() {
             }
             if (i == MAX_GAMES) {
                 // no games available, server is full, disconnecting
-                close(accept(fdListen, NULL, NULL));
+                shutdown(accept(fdListen, NULL, NULL), 0);
             }
         }
 
@@ -146,8 +156,20 @@ int main() {
 
                     int len = recv(player->fd, buf, BUFLEN, 0);
 
-                    // if(len == 0)
-                    // TODO: handle disconnection
+                    if(len <= 0){
+                        // handling disconnection or read error
+                        struct msg message;
+                        message.type = FINISH;
+                        message.len = HDR_SIZE + 1;
+                        message.finish.result = JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE;
+
+                        if(send(game->players[player_figure == CIRCLE ? CROSS : CIRCLE].fd, &message, message.len, 0)){
+                            perror("Sending through socket failed");
+                            exit(EXIT_FAILURE);
+                        };
+
+                        clean_game_up(game);
+                    }
 
                     struct msg *recved_msg = (struct msg*) buf;
                     printf("%d\n", recved_msg->type);
@@ -190,14 +212,16 @@ int main() {
                             }
                             // do actual move
                             game->board.moves[recved_msg->move.x][recved_msg->move.y] = game->player_whose_turn_is_now;
-                            for (int dest_player_figure = 1; dest_player_figure <= 2; ++dest_player_figure) {
-                                struct msg message;
-                                message.type = MOVE;
-                                message.len = HDR_SIZE + 3;
-                                message.move.x = recved_msg->move.x;
-                                message.move.y = recved_msg->move.y;
-                                message.move.player = game->player_whose_turn_is_now;
+                            ++(game->moves_counter);
 
+                            struct msg message;
+                            message.type = MOVE;
+                            message.len = HDR_SIZE + 3;
+                            message.move.x = recved_msg->move.x;
+                            message.move.y = recved_msg->move.y;
+                            message.move.player = game->player_whose_turn_is_now;
+
+                            for (int dest_player_figure = 1; dest_player_figure <= 2; ++dest_player_figure) {
                                 if(send(game->players[dest_player_figure].fd, &message, message.len, 0) != message.len){
                                     perror("Sending through socket failed");
                                     exit(EXIT_FAILURE);
@@ -206,9 +230,24 @@ int main() {
 
                             game->player_whose_turn_is_now = game->player_whose_turn_is_now == CIRCLE ? CROSS : CIRCLE;
 
-                            // TODO: check if it isn't finish of the game
+                            message.type = FINISH;
+                            message.len = HDR_SIZE + 1;
+                            message.finish.result = result_game(&(game->board));
+                            if(message.finish.result == JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE && game->moves_counter>=9)
+                                message.finish.result = DRAW;
 
-                            struct msg message;
+                            if(message.finish.result != JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE){
+                                for (int dest_player_figure = 1; dest_player_figure <= 2; ++dest_player_figure) {
+                                    if(send(game->players[dest_player_figure].fd, &message, message.len, 0) != message.len){
+                                        perror("Sending through socket failed");
+                                        exit(EXIT_FAILURE);
+                                    }
+                                }
+
+                                clean_game_up(game);
+                                break;
+                            }
+
                             message.type = MOVE_YOUR_ASS;
                             message.len = HDR_SIZE + 1;
                             message.move_your_ass.you = game->player_whose_turn_is_now;
@@ -227,4 +266,48 @@ int main() {
             }
         }
     }
+}
+
+result_t result_game(board_t *board){
+    //Checking verses
+    for (int y=0; y<3; y++)
+    {
+        for(int j=0; j<3; j++) {
+            if ((board->moves[y][j] == board->moves[y][j+1]) && (board->moves[y][j] == board->moves[y][j+ 2])) {
+                if (board->moves[y][j] == CIRCLE)
+                    return WIN_CIRCLE;
+                if (board->moves[y][j] == CROSS)
+                    return WIN_CROSS;
+            }
+        }
+    }
+    //Checking columns
+    for (int x=0; x<3; x++)
+    {
+        for(int j=0; j<3; j++) {
+            if ((board->moves[x][j] == board->moves[x + 1][j]) && (board->moves[x][j] == board->moves[x + 2][j])) {
+                if (board->moves[x][j] == CIRCLE)
+                    return WIN_CIRCLE;
+                if (board->moves[x][j] == CROSS)
+                    return WIN_CROSS;
+            }
+        }
+    }
+    //Checking diagonals
+    if ((board->moves[0][0] == board->moves[1][1]) && (board->moves[0][0] == board->moves[2][2]))
+    {
+        if (board->moves[1][1] == CIRCLE)
+            return WIN_CIRCLE;
+        if (board->moves[1][1] == CROSS)
+            return WIN_CROSS;
+    }
+    if ((board->moves[0][2] == board->moves[1][1]) && (board->moves[0][2] == board->moves[2][0]))
+    {
+        if (board->moves[1][1] == CIRCLE)
+            return WIN_CIRCLE;
+        if (board->moves[1][1] == CROSS)
+            return WIN_CROSS;
+    }
+
+    return JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE;
 }
