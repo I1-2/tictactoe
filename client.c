@@ -111,6 +111,7 @@ int main(int argc, char *argv[])
                         }
                         printf("\n");
                     }
+                    printf("\n");
                     break;
                 case MOVE_YOUR_ASS:
                     printf("YOUR TURN\n");
