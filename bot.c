@@ -5,128 +5,6 @@
 
 #define SERVPORT 9876
 
-int sign_move_n(board_t *board, figure_t player, int place_number_x, int place_number_y)
-{
-    if (board->moves[place_number_x][place_number_y] != NONE_FIGURE)
-        return 0;
-    board->moves[place_number_x][place_number_y] = (player == CIRCLE) ? CIRCLE : CROSS;
-    return 1;
-}
-
-int remove_move_n(board_t *board, int place_number_x, int place_number_y)
-{
-    if (board->moves[place_number_x][place_number_y] == NONE_FIGURE)
-        return 0;
-    board->moves[place_number_x][place_number_y] = NONE_FIGURE;
-    return 1;
-
-}
-
-void change_player(figure_t * player)
-{
-    *player = ((*player == CIRCLE) ? CROSS : CIRCLE);
-}
-
-result_t result_game(board_t *board)
-{
-    //Checking verses
-    for (int y=0; y<3; y++)
-    {
-        for(int j=0; j<3; j++) {
-            if ((board->moves[y][j] == board->moves[y][j+1]) && (board->moves[y][j] == board->moves[y][j+ 2])) {
-                if (board->moves[y][j] == CIRCLE)
-                    return WIN_CIRCLE;
-                if (board->moves[y][j] == CROSS)
-                    return WIN_CROSS;
-            }
-        }
-    }
-    //Checking columns
-    for (int x=0; x<3; x++)
-    {
-        for(int j=0; j<3; j++) {
-            if ((board->moves[x][j] == board->moves[x + 1][j]) && (board->moves[x][j] == board->moves[x + 2][j])) {
-                if (board->moves[x][j] == CIRCLE)
-                    return WIN_CIRCLE;
-                if (board->moves[x][j] == CROSS)
-                    return WIN_CROSS;
-            }
-        }
-    }
-    //Checking diagonals
-    if ((board->moves[0][0] == board->moves[1][1]) && (board->moves[0][0] == board->moves[2][2]))
-    {
-        if (board->moves[1][1] == CIRCLE)
-            return WIN_CIRCLE;
-        if (board->moves[1][1] == CROSS)
-            return WIN_CROSS;
-    }
-    if ((board->moves[0][2] == board->moves[1][1]) && (board->moves[0][2] == board->moves[2][0]))
-    {
-        if (board->moves[1][1] == CIRCLE)
-            return WIN_CIRCLE;
-        if (board->moves[1][1] == CROSS)
-            return WIN_CROSS;
-    }
-    //Checking posibility of move
-
-    for (int i=0; i<3; i++) {
-        for(int j=0; j<3; j++) {
-            if (board->moves[i][j] == NONE_FIGURE)
-                return JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE;
-        }
-    }
-    return DRAW;
-}
-
-int check_result(figure_t player, result_t result)
-{
-    if (result == DRAW) return 0;
-
-    if (((player == CIRCLE) && (result == WIN_CIRCLE)) || ((player == CROSS) && (WIN_CROSS)))
-        return 1;
-
-    return -1;
-}
-
-int do_move(board_t *board, figure_t player, int *place_number_x, int *place_number_y)
-{
-    int best_move_x = -1;
-    int best_move_y = -1;
-    int best_move_pt = -2;
-
-    int temp_result;
-    for (int i=0; i<3; i++)
-    {
-        for(int i2; i2<3; i2++) {
-            if (sign_move_n(board, player, i, i2) == 0) continue;
-
-            result_t tmpRes = result_game(board);
-            if (tmpRes != JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE)
-                if (tmpRes != JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE) {
-                    temp_result = check_result(player, tmpRes);
-                } else {
-                    figure_t enemy = player;
-                    change_player(&enemy);
-                    temp_result = (-1) * do_move(board, enemy, NULL, NULL);
-                }
-            if (temp_result > best_move_pt) {
-                best_move_pt = temp_result;
-                best_move_x = i;
-                best_move_y = i2;
-            }
-            remove_move_n(board, i,i2);
-        }
-    }
-
-    if ((place_number_x != NULL) && (place_number_y != NULL))
-    {
-        *place_number_x = best_move_x;
-        *place_number_y = best_move_y;
-    }
-    return best_move_pt;
-}
-
 int main(int argc, char *argv[])
 {
     int rc;
@@ -189,6 +67,7 @@ int main(int argc, char *argv[])
         exit(-1);
     }
     board_t moves;
+    memset(moves.moves,NONE_FIGURE,9);
 
     while(1)
     {
@@ -215,16 +94,96 @@ int main(int argc, char *argv[])
                     break;
                 case MOVE_YOUR_ASS:
                     if (message->move_your_ass.you == CIRCLE) {
-                        printf("Wykonuje ruch jako kolko\n");
+                        printf("CIRCLE MOVE\n");
                         struct msg *message = (struct msg *) msg_buf;
-                        int n = -1;
-                        int n2 = -1;
-                        figure_t pl = CIRCLE;
-                        do_move(&moves, pl, &n, &n2);
+                        int n;
+                        int n2;
+                        for(int i=0;i<3;i++)
+                        {
+                            if(moves.moves[i][0] == moves.moves[i][1] && moves.moves[i][2]==NONE_FIGURE)
+                            {
+                                n=i;
+                                n2=2;
+                                break;
+                            }
+                            else if(moves.moves[i][0] == moves.moves[i][2] && moves.moves[i][1]==NONE_FIGURE)
+                            {
+                                n=i;
+                                n2=1;
+                                break;
+                            }
+                            else if(moves.moves[i][1] == moves.moves[i][2] && moves.moves[i][0]==NONE_FIGURE)
+                            {
+                                n=i;
+                                n2=0;
+                                break;
+                            }
+                        }
+                        for(int i=0;i<3;i++) {
+                            if (moves.moves[0][i] == moves.moves[1][i] && moves.moves[2][i] == NONE_FIGURE) {
+                                n = 2;
+                                n2 = i;
+                                break;
+                            } else if (moves.moves[0][i] == moves.moves[2][i] && moves.moves[1][i] == NONE_FIGURE) {
+                                n = 1;
+                                n2 = i;
+                                break;
+                            } else if (moves.moves[1][i] == moves.moves[2][i] && moves.moves[0][i] == NONE_FIGURE) {
+                                n = 0;
+                                n2 = i;
+                                break;
+                            }
+
+                        }
+                        if(moves.moves[1][1] == moves.moves[2][2] && moves.moves[0][0]==NONE_FIGURE)
+                        {
+                            n = 0;
+                            n2 = 0;
+                        }
+                        else if(moves.moves[2][2] == moves.moves[0][0] && moves.moves[1][1]==NONE_FIGURE)
+                        {
+                            n = 1;
+                            n2 = 1;
+                        }
+                        else if(moves.moves[1][1] == moves.moves[0][0] && moves.moves[2][2]==NONE_FIGURE)
+                        {
+                            n = 2;
+                            n2 = 2;
+                        }
+                        else if(moves.moves[0][2] == moves.moves[1][1] && moves.moves[2][0]==NONE_FIGURE)
+                        {
+                            n = 2;
+                            n2 = 0;
+                        }
+                        else if(moves.moves[0][2] == moves.moves[2][0] && moves.moves[1][1]==NONE_FIGURE)
+                        {
+                            n = 1;
+                            n2 = 1;
+                        }
+                        else if(moves.moves[2][0] == moves.moves[1][1] && moves.moves[0][2]==NONE_FIGURE)
+                        {
+                            n = 0;
+                            n2 = 2;
+                        }
+                        else
+                        {
+                            for(int j=0;j<3;j++)
+                            {
+                                for(int j2=0;j2<3;j2++)
+                                {
+                                    if(moves.moves[j][j2]==NONE_FIGURE)
+                                    {
+                                        n = j;
+                                        n2 = j2;
+                                    }
+                                }
+                            }
+
+                        }
                         message->type = MOVE;
                         message->move.x = n;
                         message->move.y = n2;
-                        message->move.player = 1;
+                        message->move.player = CIRCLE;
                         message->len = 3 + HDR_SIZE;
                         if (send(sd, message, message->len, 0) == -1) {
                             perror("Socket send error\n");
@@ -234,10 +193,85 @@ int main(int argc, char *argv[])
                     else {
                         printf("Wykonuje ruch jako krzyzyk\n");
                         struct msg *message = (struct msg *) msg_buf;
-                        int n = -1;
-                        int n2 = -1;
-                        figure_t pl = CROSS;
-                        do_move(&moves, pl, &n, &n2);
+                        int n;
+                        int n2;
+                        for(int i=0;i<3;i++) {
+                            if (moves.moves[i][0] == moves.moves[i][1] && moves.moves[i][2] == NONE_FIGURE) {
+                                n = i;
+                                n2 = 2;
+                                break;
+                            } else if (moves.moves[i][0] == moves.moves[i][2] && moves.moves[i][1] == NONE_FIGURE) {
+                                n = i;
+                                n2 = 1;
+                                break;
+                            } else if (moves.moves[i][1] == moves.moves[i][2] && moves.moves[i][0] == NONE_FIGURE) {
+                                n = i;
+                                n2 = 0;
+                                break;
+                            }
+                        }
+                        for(int i=0;i<3;i++) {
+                            if (moves.moves[0][i] == moves.moves[1][i] && moves.moves[2][i] == NONE_FIGURE) {
+                                n = 2;
+                                n2 = i;
+                                break;
+                            } else if (moves.moves[0][i] == moves.moves[2][i] && moves.moves[1][i] == NONE_FIGURE) {
+                                n = 1;
+                                n2 = i;
+                                break;
+                            } else if (moves.moves[1][i] == moves.moves[2][i] && moves.moves[0][i] == NONE_FIGURE) {
+                                n = 0;
+                                n2 = i;
+                                break;
+                            }
+
+                        }
+                        if(moves.moves[1][1] == moves.moves[2][2] && moves.moves[0][0]==NONE_FIGURE)
+                        {
+                            n = 0;
+                            n2 = 0;
+                        }
+                        else if(moves.moves[2][2] == moves.moves[0][0] && moves.moves[1][1]==NONE_FIGURE)
+                        {
+                            n = 1;
+                            n2 = 1;
+                        }
+                        else if(moves.moves[1][1] == moves.moves[0][0] && moves.moves[2][2]==NONE_FIGURE)
+                        {
+                            n = 2;
+                            n2 = 2;
+                        }
+                        else if(moves.moves[0][2] == moves.moves[1][1] && moves.moves[2][0]==NONE_FIGURE)
+                        {
+                            n = 2;
+                            n2 = 0;
+                        }
+                        else if(moves.moves[0][2] == moves.moves[2][0] && moves.moves[1][1]==NONE_FIGURE)
+                        {
+                            n = 1;
+                            n2 = 1;
+                        }
+                        else if(moves.moves[2][0] == moves.moves[1][1] && moves.moves[0][2]==NONE_FIGURE)
+                        {
+                            n = 0;
+                            n2 = 2;
+                        }
+                        else
+                        {
+                            for(int j=0;j<3;j++)
+                            {
+                                for(int j2=0;j2<3;j2++)
+                                {
+                                    if(moves.moves[j][j2]==NONE_FIGURE)
+                                    {
+                                        n = j;
+                                        n2 = j2;
+                                        break;
+                                    }
+                                }
+                            }
+
+                        }
                         message->type = MOVE;
                         message->move.x = n;
                         message->move.y = n2;
