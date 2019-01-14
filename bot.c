@@ -114,7 +114,7 @@ int check_result(player_t_ player, result_t_ result)
 
     return -1;
 }
-// PRZEROBIĆ ****************************************************************************************
+
 int do_move(board_t *board, player_t_ player, int *place_number_x, int *place_number_y)
 {
     int best_move_x = -1;
@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
         perror("Socket send error\n");
         exit(-1);
     }
-    char moves[3][3];
+    board_t moves;
 
     while(1)
     {
@@ -238,9 +238,9 @@ int main(int argc, char *argv[])
                     if (message->move.x < 0 || message->move.x > 2 || message->move.y < 0 || message->move.y > 2)
                         break;
                     if (message->move.player == CIRCLE)
-                        moves[message->move.x][message->move.y] = 'O';
+                        moves.moves[message->move.x][message->move.y] = 'O';
                     else
-                        moves[message->move.x][message->move.y] = 'X';
+                        moves.moves[message->move.x][message->move.y] = 'X';
                     break;
                 case MOVE_YOUR_ASS:
                     if (message->move_your_ass.you == 1) { // 1 for CIRCLE and 2 for CROSS
