@@ -62,6 +62,7 @@ int main(int argc, char *argv[])
     struct msg *message = (struct msg *) msg_buf;
     printf("Insert your nickname\n");
     fgets(message->join.nickname, 20, stdin);
+    message->join.nickname[strlen(message->join.nickname)] = 0; // remove \n from the end
     message->type = JOIN;
     message->len = strlen(message->join.nickname)+1+HDR_SIZE;
     if(send(sd, message, message->len, 0) == -1){
@@ -157,6 +158,7 @@ int main(int argc, char *argv[])
             else
             {
                 message->type = CHAT;
+                chat_msg[strlen(chat_msg)] = 0; // remove \n from the end
                 strcpy(message->chat.msg,&(chat_msg[1]));
                 message->len = strlen(message->chat.msg)+21+HDR_SIZE;
                 if(send(sd, message, message->len, 0) == -1){
