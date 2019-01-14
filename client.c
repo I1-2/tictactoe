@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
             switch(message->type)
             {
                 case CHAT:
-                    printf("%s: %s\n",message->chat.nickname, &(message->chat.msg[1]));
+                    printf("%s: %s\n",message->chat.nickname, message->chat.msg);
                     break;
                 case MOVE:
                     if(message->move.x < 0 || message->move.x > 2 || message->move.y < 0 || message->move.y > 2)
@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
             else
             {
                 message->type = CHAT;
-                strcpy(message->chat.msg,chat_msg);
+                strcpy(message->chat.msg,&(chat_msg[1]));
                 message->len = strlen(message->chat.msg)+21+HDR_SIZE;
                 if(send(sd, message, message->len, 0) == -1){
                     perror("Socket send error\n");

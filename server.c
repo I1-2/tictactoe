@@ -166,7 +166,7 @@ int main() {
                         case MOVE:
                             if(&player != &(game.players[game.player_whose_turn_is_now])) {
                                 // player tried to do his move on not his turn
-                                if (!send_chat_msg(player.fd, "INFO", "That was not your turn motherducker..")) {
+                                if (!send_chat_msg(player.fd, "INFO", "That was not your turn motherducker.."))F {
                                     perror("Sending through socket failed");
                                     exit(EXIT_FAILURE);
                                 }
