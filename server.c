@@ -272,27 +272,22 @@ result_t result_game(board_t *board){
     //Checking verses
     for (int y=0; y<3; y++)
     {
-        for(int j=0; j<3; j++) {
-            if ((board->moves[y][j] == board->moves[y][j+1]) && (board->moves[y][j] == board->moves[y][j+ 2])) {
-                if (board->moves[y][j] == CIRCLE)
+            if ((board->moves[y][0] == board->moves[y][1]) && (board->moves[y][0] == board->moves[y][2])) {
+                if (board->moves[y][0] == CIRCLE)
                     return WIN_CIRCLE;
-                if (board->moves[y][j] == CROSS)
+                if (board->moves[y][0] == CROSS)
                     return WIN_CROSS;
             }
-        }
     }
     //Checking columns
-    for (int x=0; x<3; x++)
-    {
         for(int j=0; j<3; j++) {
-            if ((board->moves[x][j] == board->moves[x + 1][j]) && (board->moves[x][j] == board->moves[x + 2][j])) {
-                if (board->moves[x][j] == CIRCLE)
+            if ((board->moves[0][j] == board->moves[1][j]) && (board->moves[0][j] == board->moves[2][j])) {
+                if (board->moves[0][j] == CIRCLE)
                     return WIN_CIRCLE;
-                if (board->moves[x][j] == CROSS)
+                if (board->moves[0][j] == CROSS)
                     return WIN_CROSS;
             }
         }
-    }
     //Checking diagonals
     if ((board->moves[0][0] == board->moves[1][1]) && (board->moves[0][0] == board->moves[2][2]))
     {
