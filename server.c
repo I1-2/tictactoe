@@ -206,11 +206,11 @@ int main() {
             for(int i = 0; i < MAX_GAMES; ++i){
                 if(games[i].circle_player_fd == -1){
                     games[i].circle_player_fd = accept(fdListen, NULL, NULL);
-                    recieve = recv(fdListen, buf, 255, 0);
+                    recieve = recv(games[i].circle_player_fd, buf, 255, 0);
                     if(recieve<1)
                     {
                         printf("CONNECTION ERROR --> EXITING\n");
-                        close(fdListen);
+                        close(games[i].circle_player_fd);
                         exit(0);
                     }
                     struct msg *message = (struct msg *) buf;
@@ -313,11 +313,11 @@ int main() {
                     break;
                 } else if(games[i].cross_player_fd == -1){
                     games[i].cross_player_fd = accept(fdListen, NULL, NULL);
-                    recieve = recv(fdListen, buf, 255, 0);
+                    recieve = recv(games[i].cross_player_fd, buf, 255, 0);
                     if(recieve<1)
                     {
                         printf("CONNECTION ERROR --> EXITING\n");
-                        close(fdListen);
+                        close(games[i].cross_player_fd);
                         exit(0);
                     }
                     struct msg *message = (struct msg *) buf;
