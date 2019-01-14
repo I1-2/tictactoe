@@ -164,7 +164,7 @@ int main() {
                             }
                             break;
                         case MOVE:
-                            if(&player != &(game->players[game->player_whose_turn_is_now])) {
+                            if(player != &(game->players[game->player_whose_turn_is_now])) {
                                 // player tried to do his move on not his turn
                                 if (!send_chat_msg(player->fd, "INFO", "That was not your turn motherducker..")) {
                                     perror("Sending through socket failed");
