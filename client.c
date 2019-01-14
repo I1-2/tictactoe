@@ -92,8 +92,7 @@ int main(int argc, char *argv[])
             switch(message->type)
             {
                 case CHAT:
-                    printf("%s",message->chat.nickname);
-                    printf("%s",message->chat.msg);
+                    printf("%s: %s",message->chat.nickname, message->chat.msg);
                     break;
                 case MOVE:
                     if(message->move.x < 0 || message->move.x > 2 || message->move.y < 0 || message->move.y > 2)
@@ -130,6 +129,8 @@ int main(int argc, char *argv[])
                             printf("JEDEN RABIN POWIE TAK DRUGI RABIN POWIE NIE\n");
                             break;
                     }
+                    close(sd);
+                    exit(0);
                     break;
             }
         }

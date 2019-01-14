@@ -217,7 +217,7 @@ int main(int argc, char *argv[])
                         moves.moves[message->move.x][message->move.y] = 'X';
                     break;
                 case MOVE_YOUR_ASS:
-                    if (message->move_your_ass.you == 1) { // 1 for CIRCLE and 2 for CROSS
+                    if (message->move_your_ass.you == CIRCLE) { // 1 for CIRCLE and 2 for CROSS
                         struct msg *message = (struct msg *) msg_buf;
                         int n = -1;
                         int n2 = -1;
@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
                         message->type = MOVE;
                         message->move.x = n;
                         message->move.y = n2;
-                        message->move.player = 2; // 2 = CROSS
+                        message->move.player = CROSS; // 2 = CROSS
                         message->len = 3 + HDR_SIZE;
                         if (send(sd, message, message->len, 0) == -1) {
                             perror("Socket send error\n");
