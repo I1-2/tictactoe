@@ -132,7 +132,7 @@ int do_move(board_t *board, player_t_ player, int *place_number_x, int *place_nu
                 if (tmpRes != JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE) {
                     temp_result = check_result(player, tmpRes);
                 } else {
-                    player_t enemy = player;
+                    figure_t enemy = player;
                     change_player(&enemy);
                     temp_result = (-1) * do_move(board, enemy, NULL, NULL);
                 }

@@ -3,11 +3,16 @@
 
 #define HDR_SIZE 2
 
+typedef struct
+{
+    uint8_t moves[3][3];
+} board_t;
+
 typedef enum
 {
     CIRCLE,
     CROSS
-} player_t;
+} figure_t;
 
 typedef enum
 {
