@@ -140,11 +140,11 @@ int main() {
         for(int i = 0; i < MAX_GAMES; ++i) {
             for (int player_figure = 1; player_figure <= 2; ++player_figure) {
                 if (FD_ISSET(games[i].players[player_figure].fd, &rfds)) {
-                    game_t game = games[i];
-                    player_t player = game.players[player_figure];
-                    printf("New message to fd: %d\n", player.fd);
+                    game_t *game = &games[i];
+                    player_t *player = &game->players[player_figure];
+                    printf("New message to fd: %d\n", player->fd);
 
-                    int len = recv(player.fd, buf, BUFLEN, 0);
+                    int len = recv(player->fd, buf, BUFLEN, 0);
 
                     // if(len == 0)
                     // TODO: handle disconnection
@@ -153,20 +153,20 @@ int main() {
                     printf("%d\n", recved_msg->type);
                     switch (recved_msg->type){
                         case JOIN:
-                            strcpy(player.nickname, recved_msg->join.nickname);
+                            strcpy(player->nickname, recved_msg->join.nickname);
                             break;
                         case CHAT:
                             for (int dest_player_figure = 1; dest_player_figure <= 2; ++dest_player_figure){
-                                if(!send_chat_msg(game.players[dest_player_figure].fd, player.nickname, recved_msg->chat.msg)){
+                                if(!send_chat_msg(game->players[dest_player_figure].fd, player->nickname, recved_msg->chat.msg)){
                                     perror("Sending through socket failed");
                                     exit(EXIT_FAILURE);
                                 }
                             }
                             break;
                         case MOVE:
-                            if(&player != &(game.players[game.player_whose_turn_is_now])) {
+                            if(&player != &(game->players[game->player_whose_turn_is_now])) {
                                 // player tried to do his move on not his turn
-                                if (!send_chat_msg(player.fd, "INFO", "That was not your turn motherducker.."))F {
+                                if (!send_chat_msg(player->fd, "INFO", "That was not your turn motherducker..")) {
                                     perror("Sending through socket failed");
                                     exit(EXIT_FAILURE);
                                 }
@@ -174,46 +174,46 @@ int main() {
                             }
                             if(recved_msg->move.x > 2 || recved_msg->move.x < 0 || recved_msg->move.y > 2 || recved_msg->move.y < 0) {
                                 // player tried to move off the board
-                                if (!send_chat_msg(player.fd, "INFO", "Idiot.. You tried to move off the board..")) {
+                                if (!send_chat_msg(player->fd, "INFO", "Idiot.. You tried to move off the board..")) {
                                     perror("Sending through socket failed");
                                     exit(EXIT_FAILURE);
                                 }
                                 break;
                             }
-                            if(game.board.moves[recved_msg->move.x][recved_msg->move.y] != NONE_FIGURE) {
+                            if(game->board.moves[recved_msg->move.x][recved_msg->move.y] != NONE_FIGURE) {
                                 // player tried to move to occupied field
-                                if (!send_chat_msg(player.fd, "INFO", "Idiot.. You tried to move to occupied field")) {
+                                if (!send_chat_msg(player->fd, "INFO", "Idiot.. You tried to move to occupied field")) {
                                     perror("Sending through socket failed");
                                     exit(EXIT_FAILURE);
                                 }
                                 break;
                             }
                             // do actual move
-                            game.board.moves[recved_msg->move.x][recved_msg->move.y] = game.player_whose_turn_is_now;
+                            game->board.moves[recved_msg->move.x][recved_msg->move.y] = game->player_whose_turn_is_now;
                             for (int dest_player_figure = 1; dest_player_figure <= 2; ++dest_player_figure) {
                                 struct msg message;
                                 message.type = MOVE;
                                 message.len = HDR_SIZE + 3;
                                 message.move.x = recved_msg->move.x;
                                 message.move.y = recved_msg->move.y;
-                                message.move.player = game.player_whose_turn_is_now;
+                                message.move.player = game->player_whose_turn_is_now;
 
-                                if(send(game.players[dest_player_figure].fd, &message, message.len, 0) != message.len){
+                                if(send(game->players[dest_player_figure].fd, &message, message.len, 0) != message.len){
                                     perror("Sending through socket failed");
                                     exit(EXIT_FAILURE);
                                 }
                             }
 
-                            game.player_whose_turn_is_now = game.player_whose_turn_is_now == CIRCLE ? CROSS : CIRCLE;
+                            game->player_whose_turn_is_now = game->player_whose_turn_is_now == CIRCLE ? CROSS : CIRCLE;
 
                             // TODO: check if it isn't finish of the game
 
                             struct msg message;
                             message.type = MOVE_YOUR_ASS;
                             message.len = HDR_SIZE + 1;
-                            message.move_your_ass.you = game.player_whose_turn_is_now;
+                            message.move_your_ass.you = game->player_whose_turn_is_now;
 
-                            if(send(game.players[game.player_whose_turn_is_now].fd, &message, message.len, 0) != message.len){
+                            if(send(game->players[game->player_whose_turn_is_now].fd, &message, message.len, 0) != message.len){
                                 perror("Sending through socket failed");
                                 exit(EXIT_FAILURE);
                             }
