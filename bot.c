@@ -211,13 +211,11 @@ int main(int argc, char *argv[])
                 case MOVE:
                     if (message->move.x < 0 || message->move.x > 2 || message->move.y < 0 || message->move.y > 2)
                         break;
-                    if (message->move.player == CIRCLE)
-                        moves.moves[message->move.x][message->move.y] = 'O';
-                    else
-                        moves.moves[message->move.x][message->move.y] = 'X';
+                        moves.moves[message->move.x][message->move.y] = message->move.player;
                     break;
                 case MOVE_YOUR_ASS:
-                    if (message->move_your_ass.you == CIRCLE) { // 1 for CIRCLE and 2 for CROSS
+                    if (message->move_your_ass.you == CIRCLE) {
+                        printf("Wykonuje ruch jako kolko\n");
                         struct msg *message = (struct msg *) msg_buf;
                         int n = -1;
                         int n2 = -1;
@@ -234,6 +232,7 @@ int main(int argc, char *argv[])
                         }
                     }
                     else {
+                        printf("Wykonuje ruch jako krzyzyk\n");
                         struct msg *message = (struct msg *) msg_buf;
                         int n = -1;
                         int n2 = -1;

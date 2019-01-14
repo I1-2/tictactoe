@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
         exit(-1);
     }
     printf("****Prepend your message with / to chat, write :q to quit****\n");
-    printf("Insert x and y coordinate with between them: \n");
+    printf("When it`s your turn insert x and y coordinate with between them: \n");
     char moves[3][3];
 
     while(1)
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
             switch(message->type)
             {
                 case CHAT:
-                    printf("%s: %s",message->chat.nickname, message->chat.msg);
+                    printf("%s: %s\n",message->chat.nickname, message->chat.msg);
                     break;
                 case MOVE:
                     if(message->move.x < 0 || message->move.x > 2 || message->move.y < 0 || message->move.y > 2)
