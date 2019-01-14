@@ -5,37 +5,11 @@
 
 #define SERVPORT 9876
 
-typedef enum
-{
-    NONE    = 0,
-    CIRCLE_   = 1,
-    CROSS_ = 2
-} move_t;
-
-typedef enum
-{
-    G_CIRCLE = 0,
-    G_CROSS  = 1
-} player_t_;
-
-typedef enum
-{
-    WIN_CIRCLE_         = -1,
-    DRAW_               =  0,
-    WIN_CROSS_          =  1,
-    JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE_    =  2
-} result_t_;
-
-typedef struct
-{
-    uint8_t moves[3][3];
-} board_t;
-
-int sign_move_n(board_t *board, player_t_ player, int place_number_x, int place_number_y)
+int sign_move_n(board_t *board, figure_t player, int place_number_x, int place_number_y)
 {
     if (board->moves[place_number_x][place_number_y] != NONE)
         return 0;
-    board->moves[place_number_x][place_number_y] = (player == G_CIRCLE) ? CIRCLE : CROSS;
+    board->moves[place_number_x][place_number_y] = (player == CIRCLE) ? CIRCLE : CROSS;
     return 1;
 }
 
@@ -48,9 +22,9 @@ int remove_move_n(board_t *board, int place_number_x, int place_number_y)
 
 }
 
-void change_player(player_t_ * player)
+void change_player(figure_t * player)
 {
-    *player = ((*player == G_CIRCLE) ? G_CROSS : G_CIRCLE);
+    *player = ((*player == CIRCLE) ? CROSS : CIRCLE);
 }
 
 result_t result_game(board_t *board)
@@ -60,9 +34,9 @@ result_t result_game(board_t *board)
     {
         for(int j=0; j<3; j++) {
             if ((board->moves[y][j] == board->moves[y][j+1]) && (board->moves[y][j] == board->moves[y][j+ 2])) {
-                if (board->moves[y][j] == CIRCLE_)
+                if (board->moves[y][j] == CIRCLE)
                     return WIN_CIRCLE;
-                if (board->moves[y][j] == CROSS_)
+                if (board->moves[y][j] == CROSS)
                     return WIN_CROSS;
             }
         }
@@ -72,9 +46,9 @@ result_t result_game(board_t *board)
     {
         for(int j=0; j<3; j++) {
             if ((board->moves[x][j] == board->moves[x + 1][j]) && (board->moves[x][j] == board->moves[x + 2][j])) {
-                if (board->moves[x][j] == CIRCLE_)
+                if (board->moves[x][j] == CIRCLE)
                     return WIN_CIRCLE;
-                if (board->moves[x][j] == CROSS_)
+                if (board->moves[x][j] == CROSS)
                     return WIN_CROSS;
             }
         }
@@ -82,16 +56,16 @@ result_t result_game(board_t *board)
     //Checking diagonals
     if ((board->moves[0][0] == board->moves[1][1]) && (board->moves[0][0] == board->moves[2][2]))
     {
-        if (board->moves[1][1] == CIRCLE_)
+        if (board->moves[1][1] == CIRCLE)
             return WIN_CIRCLE;
-        if (board->moves[1][1] == CROSS_)
+        if (board->moves[1][1] == CROSS)
             return WIN_CROSS;
     }
     if ((board->moves[0][2] == board->moves[1][1]) && (board->moves[0][2] == board->moves[2][0]))
     {
-        if (board->moves[1][1] == CIRCLE_)
+        if (board->moves[1][1] == CIRCLE)
             return WIN_CIRCLE;
-        if (board->moves[1][1] == CROSS_)
+        if (board->moves[1][1] == CROSS)
             return WIN_CROSS;
     }
     //Checking posibility of move
@@ -105,17 +79,17 @@ result_t result_game(board_t *board)
     return DRAW;
 }
 
-int check_result(player_t_ player, result_t_ result)
+int check_result(figure_t player, result_t result)
 {
     if (result == DRAW) return 0;
 
-    if (((player == G_CIRCLE) && (result == WIN_CIRCLE)) || ((player == G_CROSS) && (WIN_CROSS)))
+    if (((player == CIRCLE) && (result == WIN_CIRCLE)) || ((player == CROSS) && (WIN_CROSS)))
         return 1;
 
     return -1;
 }
 
-int do_move(board_t *board, player_t_ player, int *place_number_x, int *place_number_y)
+int do_move(board_t *board, figure_t player, int *place_number_x, int *place_number_y)
 {
     int best_move_x = -1;
     int best_move_y = -1;
@@ -127,7 +101,7 @@ int do_move(board_t *board, player_t_ player, int *place_number_x, int *place_nu
         for(int i2; i2<3; i2++) {
             if (sign_move_n(board, player, i, i2) == 0) continue;
 
-            result_t_ tmpRes = result_game(board);
+            result_t tmpRes = result_game(board);
             if (tmpRes != JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE)
                 if (tmpRes != JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE) {
                     temp_result = check_result(player, tmpRes);
@@ -247,7 +221,7 @@ int main(int argc, char *argv[])
                         struct msg *message = (struct msg *) msg_buf;
                         int n = -1;
                         int n2 = -1;
-                        player_t_ pl = G_CIRCLE;
+                        figure_t pl = CIRCLE;
                         do_move(&moves, pl, &n, &n2);
                         message->type = MOVE;
                         message->move.x = n;
@@ -263,7 +237,7 @@ int main(int argc, char *argv[])
                         struct msg *message = (struct msg *) msg_buf;
                         int n = -1;
                         int n2 = -1;
-                        player_t_ pl = G_CROSS;
+                        figure_t pl = CROSS;
                         do_move(&moves, pl, &n, &n2);
                         message->type = MOVE;
                         message->move.x = n;
