@@ -72,6 +72,7 @@ int main(int argc, char *argv[])
     printf("****Prepend your message with / to chat, write :q to quit****\n");
     printf("When it`s your turn insert x and y coordinate with between them: \n");
     char moves[3][3];
+    memset(moves,'_',9);
 
     while(1)
     {
