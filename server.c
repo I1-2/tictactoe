@@ -39,7 +39,7 @@ bool send_chat_msg(int fd, char nickname[20], char msg[160]){
     strcpy(message.chat.msg, msg);
     strcpy(message.chat.nickname, nickname);
     message.len = HDR_SIZE + strlen(message.chat.msg) + 21; // null terminator and nickname
-    return send(fd, &message, message.len, 0) != message.len;
+    return send(fd, &message, message.len, 0) == message.len;
     // return true if message sent and false if not
 }
 
@@ -88,15 +88,12 @@ int main() {
                 FD_SET(games[i].players[CIRCLE].fd, &rfds);
             }
             if(games[i].players[CROSS].fd != -1){
-                max_fd = (games[i].players[CROSS].fd != -1 > max_fd) ? games[i].players[CROSS].fd != -1 : max_fd;
-                FD_SET(games[i].players[CROSS].fd != -1, &rfds);
+                max_fd = (games[i].players[CROSS].fd > max_fd) ? games[i].players[CROSS].fd : max_fd;
+                FD_SET(games[i].players[CROSS].fd, &rfds);
             }
         }
 
-        struct timeval tv;
-        tv.tv_sec = 5;
-        tv.tv_usec = 0;
-        select(max_fd+1, &rfds, NULL, NULL, &tv);
+        select(max_fd+1, &rfds, NULL, NULL, NULL);
 
         if (FD_ISSET(fdListen, &rfds)) {
             // handle new connection
@@ -221,8 +218,7 @@ int main() {
                                 exit(EXIT_FAILURE);
                             }
 
-
-
+                            break;
                         default:
                             perror("Got unknown message");
                             exit(EXIT_FAILURE);
