@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
             switch(message->type)
             {
                 case CHAT:
-                    printf("%s: %s\n",message->chat.nickname, message->chat.msg);
+                    printf("%s: %s\n",message->chat.nickname, &(message->chat.msg[1]));
                     break;
                 case MOVE:
                     if(message->move.x < 0 || message->move.x > 2 || message->move.y < 0 || message->move.y > 2)
@@ -139,7 +139,12 @@ int main(int argc, char *argv[])
 
             struct msg *message = (struct msg *) msg_buf;
             fgets(chat_msg, 160, stdin);
-            if(chat_msg[0]!='/')
+            if(chat_msg[0]==':' && chat_msg[1]=='q')
+            {
+                close(sd);
+                exit(0);
+            }
+            else if(chat_msg[0]!='/')
             {
                 sscanf(chat_msg,"%d %d",&(message->move.x),&(message->move.y));
                 message->type = MOVE;
@@ -148,11 +153,6 @@ int main(int argc, char *argv[])
                     perror("Socket send error\n");
                     exit(-1);
                 }
-            }
-            else if(chat_msg[0]==':' && chat_msg[1]=='q')
-            {
-                close(sd);
-                exit(0);
             }
             else
             {
