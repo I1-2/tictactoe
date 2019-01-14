@@ -77,24 +77,30 @@ int main() {
 
     #pragma clang diagnostic ignored "-Wmissing-noreturn"
     while (true) {
-        int maxFd = fdListen;
+        int max_fd = fdListen;
 
         FD_ZERO(&rfds);
         FD_SET(fdListen, &rfds);
 
         for(int i = 0; i < MAX_GAMES; ++i){
             if(games[i].players[CIRCLE].fd != -1){
-                maxFd = (games[i].players[CIRCLE].fd > maxFd) ? games[i].players[CIRCLE].fd : maxFd;
+                max_fd = (games[i].players[CIRCLE].fd > max_fd) ? games[i].players[CIRCLE].fd : max_fd;
                 FD_SET(games[i].players[CIRCLE].fd, &rfds);
             }
             if(games[i].players[CROSS].fd != -1){
-                maxFd = (games[i].players[CROSS].fd != -1 > maxFd) ? games[i].players[CROSS].fd != -1 : maxFd;
+                max_fd = (games[i].players[CROSS].fd != -1 > max_fd) ? games[i].players[CROSS].fd != -1 : max_fd;
                 FD_SET(games[i].players[CROSS].fd != -1, &rfds);
             }
         }
 
+        struct timeval tv;
+        tv.tv_sec = 5;
+        tv.tv_usec = 0;
+        select(max_fd+1, &rfds, NULL, NULL, &tv);
+
         if (FD_ISSET(fdListen, &rfds)) {
             // handle new connection
+            printf("New incomming connection\n");
             int i;
             for(i = 0; i < MAX_GAMES; ++i){
                 if(games[i].players[CIRCLE].fd == -1){
@@ -139,13 +145,15 @@ int main() {
                 if (FD_ISSET(games[i].players[player_figure].fd, &rfds)) {
                     game_t game = games[i];
                     player_t player = game.players[player_figure];
+                    printf("New message to fd: %d\n", player.fd);
 
-                    int len = recv(player.fd, &buf, BUFLEN, 0);
+                    int len = recv(player.fd, buf, BUFLEN, 0);
 
                     // if(len == 0)
-                    // TODO
+                    // TODO: handle disconnection
 
-                    struct msg *recved_msg = (struct msg*) &buf;
+                    struct msg *recved_msg = (struct msg*) buf;
+                    printf("%d\n", recved_msg->type);
                     switch (recved_msg->type){
                         case JOIN:
                             strcpy(player.nickname, recved_msg->join.nickname);
