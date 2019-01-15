@@ -8,24 +8,22 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <errno.h>
-#include <netinet/tcp.h>
 #include "message.h"
 
 #define SERVER "127.0.0.1"
-
 #define SERVPORT 9876
+
+#define BUFLEN 1024
 
 int main(int argc, char *argv[])
 {
     int serverPort = SERVPORT;
     struct sockaddr_in serveraddr;
-    char msg_buf[255];
+    char msg_buf[BUFLEN];
     char server[255];
     char chat_msg[160];
-    int receive;
-    int one = 1;
+    int unread;
     int sd = socket(AF_INET, SOCK_STREAM, 0); // socket descriptor
-    setsockopt(sd,SOL_TCP,TCP_NODELAY,&one,sizeof(one));
     if(sd < 0)
     {
         perror("Creating socket error");
@@ -89,63 +87,71 @@ int main(int argc, char *argv[])
 
         // handle networking
         if(FD_ISSET(sd, &rfds)){
-            receive = recv(sd, msg_buf, 255, 0);
-            if(receive < 1){
+            unread = recv(sd, msg_buf, BUFLEN, 0);
+            message = (struct msg *) msg_buf;
+            if(unread < 1){
                 perror("Connection error, exiting");
                 shutdown(sd, 0);
                 exit(0);
             }
 
-            switch(message->type){
-                case CHAT:
-                    printf("%s: %s\n", message->chat.nickname, message->chat.msg);
-                    break;
-                case MOVE:
-                    // no need to check if < 0, we use unsigned type
-                    if(message->move.x > 2 || message->move.y > 2)
+            while(unread > 0){
+                switch(message->type){
+                    case CHAT:
+                        printf("%s: %s\n", message->chat.nickname, message->chat.msg);
                         break;
-                    if(message->move.player == CIRCLE)
-                        moves[message->move.x][message->move.y] = 'O';
-                    else
-                        moves[message->move.x][message->move.y] = 'X';
-                    for (int x=0; x<3; x++)
-                    {
-                        for (int y=0; y<3; y++)
+                    case MOVE:
+                        // no need to check if < 0, we use unsigned type
+                        if(message->move.x > 2 || message->move.y > 2)
+                            break;
+                        if(message->move.player == CIRCLE)
+                            moves[message->move.x][message->move.y] = 'O';
+                        else
+                            moves[message->move.x][message->move.y] = 'X';
+                        for (int x=0; x<3; x++)
                         {
-                            printf("%c", moves[x][y]);
+                            for (int y=0; y<3; y++)
+                            {
+                                printf("%c", moves[x][y]);
+                            }
+                            printf("\n");
                         }
                         printf("\n");
-                    }
-                    printf("\n");
-                    break;
-                case MOVE_YOUR_ASS:
-                    if(message->move_your_ass.you == CIRCLE)
-                    printf("YOUR TURN, CIRCLE \n");
-                    else if(message->move_your_ass.you == CROSS)
-                        printf("YOUR TURN, CROSS \n");
-                    break;
-                case FINISH:
-                    switch(message->finish.result){
-                        case WIN_CIRCLE:
-                            printf("CIRCLE WINS\n");
-                            break;
-                        case WIN_CROSS:
-                            printf("CROSS WINS\n");
-                            break;
-                        case DRAW:
-                            printf("DRAW\n");
-                            break;
-                        case JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE:
-                            printf("JEDEN RABIN POWIE TAK, DRUGI RABIN POWIE NIE\n");
-                            break;
-                    }
-                    shutdown(sd, 0);
-                    exit(0);
+                        break;
+                    case MOVE_YOUR_ASS:
+                        if(message->move_your_ass.you == CIRCLE)
+                        printf("YOUR TURN, CIRCLE \n");
+                        else if(message->move_your_ass.you == CROSS)
+                            printf("YOUR TURN, CROSS \n");
+                        break;
+                    case FINISH:
+                        switch(message->finish.result){
+                            case WIN_CIRCLE:
+                                printf("CIRCLE WINS\n");
+                                break;
+                            case WIN_CROSS:
+                                printf("CROSS WINS\n");
+                                break;
+                            case DRAW:
+                                printf("DRAW\n");
+                                break;
+                            case JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE:
+                                printf("JEDEN RABIN POWIE TAK, DRUGI RABIN POWIE NIE\n");
+                                break;
+                        }
+                        shutdown(sd, 0);
+                        exit(0);
+                }
+                // handling of multiple messages in one buffer
+                int len = message->len;
+                unread -= len;
+                message = (struct msg *)(((char*) message) + len);
             }
         }
 
         // handle console input
         if(FD_ISSET(STDIN_FILENO, &rfds)){
+            message = (struct msg *) msg_buf;
             fgets(chat_msg, 160, stdin);
             if(strlen(chat_msg) == 3 && chat_msg[0]==':' && chat_msg[1]=='q'){
                 printf("Bye!");
