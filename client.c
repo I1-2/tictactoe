@@ -13,8 +13,9 @@ int main(int argc, char *argv[])
     char server[255];
     char chat_msg[160];
     int receive;
-
+    int one = 1;
     int sd = socket(AF_INET, SOCK_STREAM, 0); // socket descriptor
+    setsockopt(sd,SOL_TCP,TCP_NODELAY,&one,sizeof(one));
     if(sd < 0)
     {
         perror("Creating socket error");
@@ -108,7 +109,10 @@ int main(int argc, char *argv[])
                     printf("\n");
                     break;
                 case MOVE_YOUR_ASS:
-                    printf("YOUR TURN\n");
+                    if(message->move_your_ass.you == CIRCLE)
+                    printf("YOUR TURN, CIRCLE \n");
+                    else if(message->move_your_ass.you == CROSS)
+                        printf("YOUR TURN, CROSS \n");
                     break;
                 case FINISH:
                     switch(message->finish.result){

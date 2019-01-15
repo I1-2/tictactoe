@@ -11,5 +11,6 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <errno.h>
+#include <netinet/tcp.h>
 
 #endif //TICTACTOE_CLIENT_H
