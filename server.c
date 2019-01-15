@@ -41,7 +41,7 @@ bool send_chat_msg(int fd, char nickname[20], char msg[160]){
     strcpy(message.chat.msg, msg);
     strcpy(message.chat.nickname, nickname);
     message.len = HDR_SIZE + strlen(message.chat.msg) + 21; // null terminator and nickname
-    printf("Sending chat message to fd %d: nickname=%s, msg=%s\n", fd, nickname, msg);
+    printf("Sending CHAT message to fd %d: nickname=%s, msg=%s\n", fd, nickname, msg);
     return send(fd, &message, message.len, 0) == message.len;
     // return true if message sent and false if not
 }
