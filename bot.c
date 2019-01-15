@@ -23,8 +23,9 @@ int main(int argc, char *argv[])
     char msg_buf[255];
     char server[255];
     int receive;
-
+    int one = 1;
     int sd = socket(AF_INET, SOCK_STREAM, 0); // socket descryptor
+    setsockopt(sd,SOL_TCP,TCP_NODELAY,&one,sizeof(one));
     if(sd < 0)
     {
         perror("Creating socket error\n");
