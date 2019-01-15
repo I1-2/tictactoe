@@ -7,7 +7,6 @@
 
 int main(int argc, char *argv[])
 {
-    int rc;
     int serverPort = SERVPORT;
     struct sockaddr_in serveraddr;
     char msg_buf[255];
@@ -15,10 +14,10 @@ int main(int argc, char *argv[])
     char chat_msg[160];
     int receive;
 
-    int sd = socket(AF_INET, SOCK_STREAM, 0); // socket descryptor
+    int sd = socket(AF_INET, SOCK_STREAM, 0); // socket descriptor
     if(sd < 0)
     {
-        perror("Creating socket error\n");
+        perror("Creating socket error");
         exit(-1);
     }
     else
@@ -47,17 +46,12 @@ int main(int argc, char *argv[])
         }
         memcpy(&serveraddr.sin_addr, hostp->h_addr, sizeof(serveraddr.sin_addr));
     }
-    if((rc = connect(sd, (struct sockaddr *)&serveraddr, sizeof(serveraddr))) < 0)
-    {
-        if((rc = connect(sd, (struct sockaddr *)&serveraddr, sizeof(serveraddr))) < 0)
-        {
-            perror("Connection error\n");
-            shutdown(sd,0);
-            exit(-1);
-        }
-        else
-            printf("Connection is set\n");
-    }
+
+    if(connect(sd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0){
+        perror("Connection error");
+        shutdown(sd, 0);
+        exit(EXIT_FAILURE);
+    } else printf("Connection is set\n");
 
     struct msg *message = (struct msg *) msg_buf;
     printf("Insert your nickname\n");
@@ -66,40 +60,40 @@ int main(int argc, char *argv[])
     message->type = JOIN;
     message->len = strlen(message->join.nickname)+1+HDR_SIZE;
     if(send(sd, message, message->len, 0) == -1){
-        perror("Socket send error\n");
-        exit(-1);
+        perror("Socket send error");
+        exit(EXIT_FAILURE);
     }
     printf("****Prepend your message with / to chat, write :q to quit****\n");
-    printf("When it`s your turn insert x and y coordinate with between them: \n");
+    printf("When it`s your turn insert x and y coordinate with space between them - eg. \"1 0\"\n");
     char moves[3][3];
     memset(moves,'_',9);
 
-    while(1)
-    {
+    while(1){
+        // handling console input and network socket at the same time without threading
         fd_set rfds;
         FD_ZERO(&rfds);
-        FD_SET(fileno(stdin), &rfds);
+        FD_SET(STDIN_FILENO, &rfds);
         FD_SET(sd, &rfds);
-        select((fileno(stdin) > sd? fileno(stdin) : sd)+1, &rfds, NULL, NULL, NULL);
-        if(FD_ISSET(sd, &rfds))
-        {
+        select((STDIN_FILENO > sd ? STDIN_FILENO : sd)+1, &rfds, NULL, NULL, NULL);
+
+        // handle networking
+        if(FD_ISSET(sd, &rfds)){
             receive = recv(sd, msg_buf, 255, 0);
-            if(receive<1)
-            {
-                printf("CONNECTION ERROR --> EXITING\n");
-                shutdown(sd,0);
+            if(receive < 1){
+                perror("Connection error, exiting");
+                shutdown(sd, 0);
                 exit(0);
             }
-            struct msg *message = (struct msg *) msg_buf;
-            switch(message->type)
-            {
+
+            switch(message->type){
                 case CHAT:
-                    printf("%s: %s\n",message->chat.nickname, message->chat.msg);
+                    printf("%s: %s\n", message->chat.nickname, message->chat.msg);
                     break;
                 case MOVE:
-                    if(message->move.x < 0 || message->move.x > 2 || message->move.y < 0 || message->move.y > 2)
+                    // no need to check if < 0, we use unsigned type
+                    if(message->move.x > 2 || message->move.y > 2)
                         break;
-                    if(message->move.player==CIRCLE)
+                    if(message->move.player == CIRCLE)
                         moves[message->move.x][message->move.y] = 'O';
                     else
                         moves[message->move.x][message->move.y] = 'X';
@@ -117,8 +111,7 @@ int main(int argc, char *argv[])
                     printf("YOUR TURN\n");
                     break;
                 case FINISH:
-                    switch(message->finish.result)
-                    {
+                    switch(message->finish.result){
                         case WIN_CIRCLE:
                             printf("CIRCLE WINS\n");
                             break;
@@ -129,52 +122,39 @@ int main(int argc, char *argv[])
                             printf("DRAW\n");
                             break;
                         case JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE:
-                            printf("JEDEN RABIN POWIE TAK DRUGI RABIN POWIE NIE\n");
+                            printf("JEDEN RABIN POWIE TAK, DRUGI RABIN POWIE NIE\n");
                             break;
                     }
-                    shutdown(sd,0);
+                    shutdown(sd, 0);
                     exit(0);
-                    break;
             }
         }
-        if(FD_ISSET(fileno(stdin), &rfds))
-        {
 
-            struct msg *message = (struct msg *) msg_buf;
+        // handle console input
+        if(FD_ISSET(STDIN_FILENO, &rfds)){
             fgets(chat_msg, 160, stdin);
-            if(chat_msg[0]==':' && chat_msg[1]=='q')
-            {
-                shutdown(sd,0);
-                exit(0);
-            }
-            else if(chat_msg[0]!='/')
-            {
+            if(strlen(chat_msg) == 3 && chat_msg[0]==':' && chat_msg[1]=='q'){
+                printf("Bye!");
+                shutdown(sd, 0);
+                exit(EXIT_SUCCESS);
+            } else if(chat_msg[0]!='/'){
                 sscanf(chat_msg,"%d %d",&(message->move.x),&(message->move.y));
                 message->type = MOVE;
                 message->len = 3+HDR_SIZE;
                 if(send(sd, message, message->len, 0) == -1){
-                    perror("Socket send error\n");
-                    exit(-1);
+                    perror("Socket send error");
+                    exit(EXIT_FAILURE);
                 }
-            }
-            else
-            {
+            } else {
                 message->type = CHAT;
                 chat_msg[strlen(chat_msg)-1] = 0; // remove \n from the end
-                strcpy(message->chat.msg,&(chat_msg[1]));
+                strcpy(message->chat.msg, &(chat_msg[1]));
                 message->len = strlen(message->chat.msg)+21+HDR_SIZE;
                 if(send(sd, message, message->len, 0) == -1){
-                    perror("Socket send error\n");
-                    exit(-1);
+                    perror("Socket send error");
+                    exit(EXIT_FAILURE);
                 }
             }
-
         }
     }
-
-
-
-
-    shutdown(sd,0);
-    return 0;
 }
