@@ -41,7 +41,7 @@ bool send_chat_msg(int fd, char nickname[20], char msg[160]){
     strcpy(message.chat.msg, msg);
     strcpy(message.chat.nickname, nickname);
     message.len = HDR_SIZE + strlen(message.chat.msg) + 21; // null terminator and nickname
-    printf("Sending chat message to fd %d: nickname=%s, msg=%s", fd, nickname, msg);
+    printf("Sending chat message to fd %d: nickname=%s, msg=%s\n", fd, nickname, msg);
     return send(fd, &message, message.len, 0) == message.len;
     // return true if message sent and false if not
 }
@@ -53,7 +53,7 @@ bool send_move_msg(int fd, uint8_t x, uint8_t y, figure_t player){
     message.move.x = x;
     message.move.y = y;
     message.move.player = player;
-    printf("Sending MOVE message to fd %d: x=%d, y=%d, player=%d", fd, x, y, player);
+    printf("Sending MOVE message to fd %d: x=%d, y=%d, player=%d\n", fd, x, y, player);
     return send(fd, &message, message.len, 0) == message.len;
 }
 
@@ -62,7 +62,7 @@ bool send_move_your_ass_msg(int fd, figure_t player){
     message.type = MOVE_YOUR_ASS;
     message.len = HDR_SIZE + 1;
     message.move_your_ass.you = player;
-    printf("Sending MOVE_YOUR_ASS message to fd %d: you=%d", fd, player);
+    printf("Sending MOVE_YOUR_ASS message to fd %d: you=%d\n", fd, player);
     return send(fd, &message, message.len, 0) == message.len;
 }
 
@@ -71,7 +71,7 @@ bool send_finish_msg(int fd, result_t result){
     message.type = FINISH;
     message.len = HDR_SIZE + 1;
     message.finish.result = result;
-    printf("Sending FINISH message to fd %d: result=%d", fd, result);
+    printf("Sending FINISH message to fd %d: result=%d\n", fd, result);
     return send(fd, &message, message.len, 0) == message.len;
 }
 
