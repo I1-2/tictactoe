@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
             while(unread > 0){
                 switch(message->type){
                     case CHAT:
-                        printf("%s: %s\n", message->chat.nickname, message->chat.msg);
+                        printf("[CHAT] %s: %s\n", message->chat.nickname, message->chat.msg);
                         break;
                     case MOVE:
                         // no need to check if < 0, we use unsigned type

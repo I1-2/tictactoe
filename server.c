@@ -82,7 +82,7 @@ void clean_game_up(game_t* game){
     game->players[CROSS].fd = -1;
 }
 
-result_t result_game(board_t *board);
+result_t check_game(board_t *board);
 
 int main() {
     game_t games[MAX_GAMES];
@@ -215,8 +215,8 @@ int main() {
                                     }
                                     break;
                                 }
-                                if (recved_msg->move.x > 2 || recved_msg->move.x < 0 || recved_msg->move.y > 2 ||
-                                    recved_msg->move.y < 0) {
+                                // no need to check if < 0, we use unsigned type
+                                if (recved_msg->move.x > 2 || recved_msg->move.y > 2) {
                                     // player tried to move off the board
                                     if (!send_chat_msg(player->fd, "INFO", "Idiot.. You tried to move off the board..")) {
                                         perror("Sending through socket failed");
@@ -247,7 +247,7 @@ int main() {
                                 // switch players
                                 game->player_whose_turn_is_now = game->player_whose_turn_is_now == CIRCLE ? CROSS : CIRCLE;
 
-                                result_t result = result_game(&(game->board));
+                                result_t result = check_game(&(game->board));
                                 if (result == JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE && game->moves_counter >= 9)
                                     result = DRAW;
                                 if (result != JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE) {
@@ -283,7 +283,7 @@ int main() {
     }
 }
 
-result_t result_game(board_t *board) {
+result_t check_game(board_t *board) {
     //Checking verses
     for (int y = 0; y < 3; y++) {
         if ((board->moves[y][0] == board->moves[y][1]) && (board->moves[y][0] == board->moves[y][2])) {
