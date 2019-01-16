@@ -29,8 +29,6 @@ int main(int argc, char *argv[])
         perror("Creating socket error");
         exit(-1);
     }
-    else
-        printf("Client socket is set\n");
 
     if(argc > 1)
         strcpy(server, argv[1]);
@@ -56,24 +54,25 @@ int main(int argc, char *argv[])
         memcpy(&serveraddr.sin_addr, hostp->h_addr, sizeof(serveraddr.sin_addr));
     }
 
-    if(connect(sd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0){
-        perror("Connection error");
-        shutdown(sd, 0);
-        exit(EXIT_FAILURE);
-    } else printf("Connection is set\n");
-
     struct msg *message = (struct msg *) msg_buf;
     printf("Insert your nickname\n");
     fgets(message->join.nickname, 20, stdin);
     message->join.nickname[strlen(message->join.nickname)-1] = 0; // remove \n from the end
     message->type = JOIN;
     message->len = strlen(message->join.nickname)+1+HDR_SIZE;
+
+    if(connect(sd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0){
+        perror("Connection error");
+        shutdown(sd, 0);
+        exit(EXIT_FAILURE);
+    }
+
     if(send(sd, message, message->len, 0) == -1){
         perror("Socket send error");
         exit(EXIT_FAILURE);
     }
-    printf("****Prepend your message with / to chat, write :q to quit****\n");
-    printf("When it`s your turn insert x and y coordinate with space between them - eg. \"1 0\"\n");
+    printf("**Connected, prepend your message with / to chat, write :q to quit\n");
+    printf("**When it`s your turn insert x and y coordinate with space between them - eg. \"1 0\"\n");
     char moves[3][3];
     memset(moves,'_',9);
 
@@ -140,7 +139,7 @@ int main(int argc, char *argv[])
                                 break;
                         }
                         shutdown(sd, 0);
-                        exit(0);
+                        exit(EXIT_SUCCESS);
                 }
                 // handling of multiple messages in one buffer
                 int len = message->len;

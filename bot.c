@@ -49,8 +49,6 @@ int main(int argc, char *argv[])
         perror("Creating socket error");
         exit(-1);
     }
-    else
-        printf("Client socket is set\n");
 
     if(argc > 1)
         strcpy(server, argv[1]);
@@ -86,7 +84,7 @@ int main(int argc, char *argv[])
         perror("Connection error");
         shutdown(sd, 0);
         exit(EXIT_FAILURE);
-    } else printf("Connection is set\n");
+    } else printf("Bot connected to server\n");
 
     if(send(sd, message, message->len, 0) == -1){
         perror("Socket send error");
@@ -153,7 +151,7 @@ int main(int argc, char *argv[])
                             break;
                     }
                     shutdown(sd, 0);
-                    exit(0);
+                    exit(EXIT_SUCCESS);
             }
             // handling of multiple messages in one buffer
             int len = message->len;
