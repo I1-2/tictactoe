@@ -8,27 +8,45 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <errno.h>
-#include <netinet/tcp.h>
 #include "message.h"
 
-#define SERVER "127.0.0.1"
+#define true 1
+#define false 0
+#define bool uint8_t
 
+#define SERVER "127.0.0.1"
 #define SERVPORT 9876
+
+#define BUFLEN 1024
+
+typedef struct {
+    uint8_t board[9];
+} local_board_t;
+
+int do_move(local_board_t *board, figure_t player, uint8_t *field);
+
+bool send_move_msg(int fd, uint8_t x, uint8_t y, figure_t player){
+    struct msg message;
+    message.type = MOVE;
+    message.len = HDR_SIZE + 3;
+    message.move.x = x;
+    message.move.y = y;
+    message.move.player = player;
+    printf("Sending MOVE message to fd %d: x=%d, y=%d, player=%d\n", fd, x, y, player);
+    return send(fd, &message, message.len, 0) == message.len;
+}
 
 int main(int argc, char *argv[])
 {
-    int rc;
     int serverPort = SERVPORT;
     struct sockaddr_in serveraddr;
-    char msg_buf[255];
+    char msg_buf[BUFLEN];
     char server[255];
-    int receive;
-    int one = 1;
-    int sd = socket(AF_INET, SOCK_STREAM, 0); // socket descryptor
-    setsockopt(sd,SOL_TCP,TCP_NODELAY,&one,sizeof(one));
+    int unread;
+    int sd = socket(AF_INET, SOCK_STREAM, 0); // socket descriptor
     if(sd < 0)
     {
-        perror("Creating socket error\n");
+        perror("Creating socket error");
         exit(-1);
     }
     else
@@ -46,269 +64,215 @@ int main(int argc, char *argv[])
     serveraddr.sin_family = AF_INET;
     serveraddr.sin_port = htons(serverPort);
 
-    if((serveraddr.sin_addr.s_addr = inet_addr(server)) == (unsigned long)INADDR_NONE)
-    {
+    if((serveraddr.sin_addr.s_addr = inet_addr(server)) == (unsigned long)INADDR_NONE){
         struct hostent *hostp = gethostbyname(server);
         if(hostp == (struct hostent *)NULL)
         {
             printf("404 Host not found \n");
-            close(sd);
+            shutdown(sd,0);
             exit(-1);
         }
         memcpy(&serveraddr.sin_addr, hostp->h_addr, sizeof(serveraddr.sin_addr));
     }
-    if((rc = connect(sd, (struct sockaddr *)&serveraddr, sizeof(serveraddr))) < 0)
-    {
-        if((rc = connect(sd, (struct sockaddr *)&serveraddr, sizeof(serveraddr))) < 0)
-        {
-            perror("Connection error\n");
-            close(sd);
-            exit(-1);
-        }
-        else
-            printf("Connection is set\n");
-    }
-    strcpy(msg_buf,"RABIN");
+
     struct msg *message = (struct msg *) msg_buf;
-    message->join.nickname;
+    printf("Insert bot's nickname:\n");
+    fgets(message->join.nickname, 20, stdin);
+    message->join.nickname[strlen(message->join.nickname)-1] = 0; // remove \n from the end
     message->type = JOIN;
     message->len = strlen(message->join.nickname)+1+HDR_SIZE;
-    if(send(sd, message, message->len, 0) == -1){
-        perror("Socket send error\n");
-        exit(-1);
-    }
-    board_t moves;
-    memset(moves.moves,NONE_FIGURE,9);
 
-    while(1)
-    {
+    if(connect(sd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0){
+        perror("Connection error");
+        shutdown(sd, 0);
+        exit(EXIT_FAILURE);
+    } else printf("Connection is set\n");
+
+    if(send(sd, message, message->len, 0) == -1){
+        perror("Socket send error");
+        exit(EXIT_FAILURE);
+    }
+
+    figure_t player = NONE_FIGURE;
+    local_board_t board;
+    memset(board.board, NONE_FIGURE, 9);
+
+    while(1){
         fd_set rfds;
         FD_ZERO(&rfds);
-        FD_SET(fileno(stdin), &rfds);
         FD_SET(sd, &rfds);
-        select((fileno(stdin) > sd? fileno(stdin) : sd)+1, &rfds, NULL, NULL, NULL);
-        if(FD_ISSET(sd, &rfds))
-        {
-            receive = recv(sd, msg_buf, 255, 0);
-            if(receive<1)
-            {
-                printf("CONNECTION ERROR --> EXITING");
-                close(sd);
-                exit(0);
-            }
-            struct msg *message = (struct msg *) msg_buf;
-            switch(message->type) {
+        select(sd+1, &rfds, NULL, NULL, NULL);
+
+        // handle networking
+        unread = recv(sd, msg_buf, BUFLEN, 0);
+        message = (struct msg *) msg_buf;
+        if(unread < 1){
+            perror("Connection error, exiting");
+            shutdown(sd, 0);
+            exit(0);
+        }
+
+        while(unread > 0){
+            switch(message->type){
+                case CHAT:
+                    printf("[CHAT] %s: %s\n", message->chat.nickname, message->chat.msg);
+                    break;
                 case MOVE:
-                    if (message->move.x < 0 || message->move.x > 2 || message->move.y < 0 || message->move.y > 2)
+                    // no need to check if < 0, we use unsigned type
+                    if(message->move.x > 2 || message->move.y > 2)
                         break;
-                        moves.moves[message->move.x][message->move.y] = message->move.player;
+                    board.board[3*message->move.y+message->move.x] = message->move.player;
                     break;
                 case MOVE_YOUR_ASS:
-                    if (message->move_your_ass.you == CIRCLE) {
-                        printf("CIRCLE MOVE\n");
-                        struct msg *message = (struct msg *) msg_buf;
-                        int n;
-                        int n2;
-                        for(int i=0;i<3;i++)
-                        {
-                            if(moves.moves[i][0] == moves.moves[i][1] && moves.moves[i][2]==NONE_FIGURE)
-                            {
-                                n=i;
-                                n2=2;
-                                break;
-                            }
-                            else if(moves.moves[i][0] == moves.moves[i][2] && moves.moves[i][1]==NONE_FIGURE)
-                            {
-                                n=i;
-                                n2=1;
-                                break;
-                            }
-                            else if(moves.moves[i][1] == moves.moves[i][2] && moves.moves[i][0]==NONE_FIGURE)
-                            {
-                                n=i;
-                                n2=0;
-                                break;
-                            }
-                        }
-                        for(int i=0;i<3;i++) {
-                            if (moves.moves[0][i] == moves.moves[1][i] && moves.moves[2][i] == NONE_FIGURE) {
-                                n = 2;
-                                n2 = i;
-                                break;
-                            } else if (moves.moves[0][i] == moves.moves[2][i] && moves.moves[1][i] == NONE_FIGURE) {
-                                n = 1;
-                                n2 = i;
-                                break;
-                            } else if (moves.moves[1][i] == moves.moves[2][i] && moves.moves[0][i] == NONE_FIGURE) {
-                                n = 0;
-                                n2 = i;
-                                break;
-                            }
-
-                        }
-                        if(moves.moves[1][1] == moves.moves[2][2] && moves.moves[0][0]==NONE_FIGURE)
-                        {
-                            n = 0;
-                            n2 = 0;
-                        }
-                        else if(moves.moves[2][2] == moves.moves[0][0] && moves.moves[1][1]==NONE_FIGURE)
-                        {
-                            n = 1;
-                            n2 = 1;
-                        }
-                        else if(moves.moves[1][1] == moves.moves[0][0] && moves.moves[2][2]==NONE_FIGURE)
-                        {
-                            n = 2;
-                            n2 = 2;
-                        }
-                        else if(moves.moves[0][2] == moves.moves[1][1] && moves.moves[2][0]==NONE_FIGURE)
-                        {
-                            n = 2;
-                            n2 = 0;
-                        }
-                        else if(moves.moves[0][2] == moves.moves[2][0] && moves.moves[1][1]==NONE_FIGURE)
-                        {
-                            n = 1;
-                            n2 = 1;
-                        }
-                        else if(moves.moves[2][0] == moves.moves[1][1] && moves.moves[0][2]==NONE_FIGURE)
-                        {
-                            n = 0;
-                            n2 = 2;
-                        }
-                        else
-                        {
-                            for(int j=0;j<3;j++)
-                            {
-                                for(int j2=0;j2<3;j2++)
-                                {
-                                    if(moves.moves[j][j2]==NONE_FIGURE)
-                                    {
-                                        n = j;
-                                        n2 = j2;
-                                    }
-                                }
-                            }
-
-                        }
-                        message->type = MOVE;
-                        message->move.x = n;
-                        message->move.y = n2;
-                        message->move.player = CIRCLE;
-                        message->len = 3 + HDR_SIZE;
-                        if (send(sd, message, message->len, 0) == -1) {
-                            perror("Socket send error\n");
-                            exit(-1);
-                        }
+                    if(player == NONE_FIGURE) {
+                        player = message->move_your_ass.you;
+                        if(player == CIRCLE) printf("I'm a circle!\n");
+                        else printf("I'm a cross!\n");
                     }
-                    else {
-                        printf("Wykonuje ruch jako krzyzyk\n");
-                        struct msg *message = (struct msg *) msg_buf;
-                        int n;
-                        int n2;
-                        for(int i=0;i<3;i++) {
-                            if (moves.moves[i][0] == moves.moves[i][1] && moves.moves[i][2] == NONE_FIGURE) {
-                                n = i;
-                                n2 = 2;
-                                break;
-                            } else if (moves.moves[i][0] == moves.moves[i][2] && moves.moves[i][1] == NONE_FIGURE) {
-                                n = i;
-                                n2 = 1;
-                                break;
-                            } else if (moves.moves[i][1] == moves.moves[i][2] && moves.moves[i][0] == NONE_FIGURE) {
-                                n = i;
-                                n2 = 0;
-                                break;
-                            }
-                        }
-                        for(int i=0;i<3;i++) {
-                            if (moves.moves[0][i] == moves.moves[1][i] && moves.moves[2][i] == NONE_FIGURE) {
-                                n = 2;
-                                n2 = i;
-                                break;
-                            } else if (moves.moves[0][i] == moves.moves[2][i] && moves.moves[1][i] == NONE_FIGURE) {
-                                n = 1;
-                                n2 = i;
-                                break;
-                            } else if (moves.moves[1][i] == moves.moves[2][i] && moves.moves[0][i] == NONE_FIGURE) {
-                                n = 0;
-                                n2 = i;
-                                break;
-                            }
 
-                        }
-                        if(moves.moves[1][1] == moves.moves[2][2] && moves.moves[0][0]==NONE_FIGURE)
-                        {
-                            n = 0;
-                            n2 = 0;
-                        }
-                        else if(moves.moves[2][2] == moves.moves[0][0] && moves.moves[1][1]==NONE_FIGURE)
-                        {
-                            n = 1;
-                            n2 = 1;
-                        }
-                        else if(moves.moves[1][1] == moves.moves[0][0] && moves.moves[2][2]==NONE_FIGURE)
-                        {
-                            n = 2;
-                            n2 = 2;
-                        }
-                        else if(moves.moves[0][2] == moves.moves[1][1] && moves.moves[2][0]==NONE_FIGURE)
-                        {
-                            n = 2;
-                            n2 = 0;
-                        }
-                        else if(moves.moves[0][2] == moves.moves[2][0] && moves.moves[1][1]==NONE_FIGURE)
-                        {
-                            n = 1;
-                            n2 = 1;
-                        }
-                        else if(moves.moves[2][0] == moves.moves[1][1] && moves.moves[0][2]==NONE_FIGURE)
-                        {
-                            n = 0;
-                            n2 = 2;
-                        }
-                        else
-                        {
-                            for(int j=0;j<3;j++)
-                            {
-                                for(int j2=0;j2<3;j2++)
-                                {
-                                    if(moves.moves[j][j2]==NONE_FIGURE)
-                                    {
-                                        n = j;
-                                        n2 = j2;
-                                        break;
-                                    }
-                                }
-                            }
-
-                        }
-                        message->type = MOVE;
-                        message->move.x = n;
-                        message->move.y = n2;
-                        message->move.player = CROSS; // 2 = CROSS
-                        message->len = 3 + HDR_SIZE;
-                        if (send(sd, message, message->len, 0) == -1) {
-                            perror("Socket send error\n");
-                            exit(-1);
-                        }
+                    uint8_t field = 0;
+                    do_move(&board, player, &field);
+                    if (!send_move_msg(sd, field % 3, field / 3, player)) {
+                        perror("Sending through socket failed");
+                        exit(EXIT_FAILURE);
                     }
                     break;
                 case FINISH:
-                    close(sd);
+                    switch(message->finish.result){
+                        case WIN_CIRCLE:
+                            printf("Circle wins\n");
+                            break;
+                        case WIN_CROSS:
+                            printf("Cross wins\n");
+                            break;
+                        case DRAW:
+                            printf("Draw\n");
+                            break;
+                        case JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE:
+                            printf("JEDEN RABIN POWIE TAK, DRUGI RABIN POWIE NIE\n");
+                            break;
+                    }
+                    shutdown(sd, 0);
                     exit(0);
-                    break;
             }
+            // handling of multiple messages in one buffer
+            int len = message->len;
+            unread -= len;
+            message = (struct msg *)(((char*) message) + len);
         }
-
-
-
     }
-
-
-
-
-    close(sd);
-    return 0;
 }
 
+int set_move(local_board_t *board, figure_t player, uint8_t field) {
+    if (board->board[field] != NONE_FIGURE)
+        return 0;
+    board->board[field] = (player == CIRCLE) ? CIRCLE : CROSS;
+    return 1;
+}
+
+int unset_move(local_board_t *board, uint8_t field)
+{
+    if (board->board[field] == NONE_FIGURE)
+        return 0;
+    board->board[field] = NONE_FIGURE;
+    return 1;
+}
+
+void change_player(figure_t *player)
+{
+    *player = (*player == CIRCLE) ? CROSS : CIRCLE;
+}
+
+result_t check_game(local_board_t *board) {
+    //Sprawdzanie wierszy
+    for (int y=0; y<3; y++)
+    {
+        if ((board->board[3*y] == board->board[3*y + 1]) && (board->board[3*y] == board->board[3*y + 2]))
+        {
+            if (board->board[3*y] == CIRCLE)
+                return WIN_CIRCLE;
+            if (board->board[3*y] == CROSS)
+                return WIN_CROSS;
+        }
+    }
+    //Sprawdzanie kolumn
+    for (int x=0; x<3; x++)
+    {
+        if ((board->board[x] == board->board[x + 3]) && (board->board[x] == board->board[x + 6]))
+        {
+            if (board->board[x] == CIRCLE)
+                return WIN_CIRCLE;
+            if (board->board[x] == CROSS)
+                return WIN_CROSS;
+        }
+    }
+    //Sprawdzanie przekątnych
+    if ((board->board[0] == board->board[4]) && (board->board[0] == board->board[8]))
+    {
+        if (board->board[4] == CIRCLE)
+            return WIN_CIRCLE;
+        if (board->board[4] == CROSS)
+            return WIN_CROSS;
+    }
+    if ((board->board[2] == board->board[4]) && (board->board[2] == board->board[6]))
+    {
+        if (board->board[4] == CIRCLE)
+            return WIN_CIRCLE;
+        if (board->board[4] == CROSS)
+            return WIN_CROSS;
+    }
+    //sprawdzanie możliwości wykonania ruchu
+
+    for (int i=0; i<9; i++)
+        if (board->board[i] == NONE_FIGURE)
+            return JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE;
+
+    return DRAW;
+}
+
+int review_result(figure_t player, result_t result) {
+    if (result == DRAW) return 0;
+
+    if (((player == CIRCLE) && (result == WIN_CIRCLE)) || ((player == CROSS) && (result == WIN_CROSS)))
+        return 1;
+
+    return -1;
+}
+
+/**
+ * @return -1 przegrana, 0 remis, 1 wygrana
+ */
+int do_move(local_board_t *board, figure_t player, uint8_t *field) {
+    uint8_t best_field = 0;
+    int best_result = -2;
+
+    int result;
+    for (uint8_t i=0; i<9; i++)
+    {
+        if (set_move(board, player, i) == 0) continue;
+
+        result_t tmp_result = check_game(board);
+        if (tmp_result != JEDEN_RABIN_POWIE_TAK_DRUGI_RABIN_POWIE_NIE)
+        {
+            result = review_result(player, tmp_result);
+        }
+        else
+        {
+            figure_t enemy = player;
+            change_player(&enemy);
+            result = (-1) * do_move(board, enemy, NULL);
+        }
+        if (result > best_result)
+        {
+            best_result = result;
+            best_field = i;
+        }
+        unset_move(board, i);
+    }
+
+    if (field != NULL)
+    {
+        *field = best_field;
+    }
+    return best_result;
+}
